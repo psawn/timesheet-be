@@ -5,11 +5,7 @@ import { RolesGuard } from 'src/guards/role.guard';
 
 export function Auth() {
   return applyDecorators(
-    UseGuards(
-      // phải theo đúng thứ tự JwtAuthGuard->RolesGuard (C1)
-      JwtAuthGuard,
-      RolesGuard,
-    ),
+    UseGuards(JwtAuthGuard, RolesGuard),
     ApiBearerAuth(),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   );

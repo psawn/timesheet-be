@@ -26,13 +26,19 @@
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/swagger": "^6.1.2",
+    "@nestjs/typeorm": "^9.0.1",
+    "@types/bcrypt": "^5.0.0",
+    "bcrypt": "^5.0.1",
     "class-validator": "^0.13.2",
+    "joi": "^17.6.0",
     "lodash": "^4.17.21",
     "nestjs-typeorm-paginate": "^4.0.2",
     "passport-jwt": "^4.0.0",
+    "pg": "^8.8.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "typeorm": "^0.3.9"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
