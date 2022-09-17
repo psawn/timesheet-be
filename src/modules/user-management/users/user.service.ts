@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
-import { FilterUsersDto, UpdateUserDto } from './dto/user.dto';
+import { FilterUsersDto, UpdateUserDto } from 'src/modules/users/dto/user.dto';
 import { UsersRepository } from './user.repository';
 
 @Injectable()
@@ -29,5 +28,9 @@ export class UsersService {
     });
     const data = { ...updateUserDto, id: user.id };
     return await this.usersRepository.update(data);
+  }
+
+  async findOneWithRoles(conditions: any) {
+    return await this.usersRepository.findOneWithRoles(conditions);
   }
 }

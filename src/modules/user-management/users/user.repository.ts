@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { get } from 'lodash';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
-import { FilterUsersDto } from './dto/user.dto';
+import { UserRole } from '../user-role/user-role.entity';
+import { FilterUsersDto } from './dto';
 import { User } from './user.entity';
 
 @Injectable()
@@ -37,5 +39,26 @@ export class UsersRepository extends TypeORMRepository<User> {
 
   async update(data: any) {
     return await User.save(data);
+  }
+
+  async findOneWithRoles(conditions: any): Promise<User> {
+    console.log(conditions);
+    const query = User.createQueryBuilder('user')
+      .leftJoinAndMapMany(
+        'user.roles',
+        UserRole,
+        'roles',
+        'user.code = roles.userCode',
+      )
+      .select(['user.id', 'user.code', 'roles.id', 'roles.roleCode'])
+      .where(conditions);
+
+    const user = await query.getOne();
+
+    user['roles'] = user['roles'].map((item) => {
+      return get(item, 'roleCode');
+    });
+
+    return user;
   }
 }

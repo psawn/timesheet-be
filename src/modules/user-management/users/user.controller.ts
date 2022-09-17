@@ -11,8 +11,9 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/decorators/auth.decorator';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { Roles } from 'src/decorators/role.decorator';
-import { FilterUsersDto, UpdateUserDto } from './dto/user.dto';
+import { FilterUsersDto, UpdateUserDto } from './dto';
 import { UsersService } from './user.service';
+import { RoleCodeEnum } from 'src/common/constants/role.enum';
 
 @Auth()
 @ApiTags('User')
@@ -21,17 +22,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles('admin')
+  @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
     status: 200,
     description: 'Get users successfully.',
   })
   @customDecorators()
-  async get(@Query(ValidationPipe) filterUsersDto: FilterUsersDto) {
-    const user = await this.usersService.findByConditions(filterUsersDto);
-    return {
-      data: user,
-    };
+  async getAll(@Query(ValidationPipe) filterUsersDto: FilterUsersDto) {
+    const result = await this.usersService.findByConditions(filterUsersDto);
+    return { data: result.items, pagination: result.meta };
   }
 
   @Patch()
