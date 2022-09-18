@@ -7,22 +7,22 @@ import { FilterUsersDto } from './dto';
 import { User } from './user.entity';
 
 @Injectable()
-export class UsersRepository extends TypeORMRepository<User> {
+export class UserRepository extends TypeORMRepository<User> {
   async findByConditions(filterUsersDto: FilterUsersDto) {
     const { page, limit, email } = filterUsersDto;
-    const query = User.createQueryBuilder('users');
+    const query = User.createQueryBuilder('user');
 
     query.select([
-      'users.id',
-      'users.email',
-      'users.phone',
-      'users.created_at',
-      'users.updated_at',
-      'users.deleted_at',
+      'user.id',
+      'user.email',
+      'user.phone',
+      'user.created_at',
+      'user.updated_at',
+      'user.deleted_at',
     ]);
 
     if (email) {
-      query.andWhere('users.email = :email', { email });
+      query.andWhere('user.email = :email', { email });
     }
 
     return this.paginate({ page, limit }, query);
@@ -42,7 +42,6 @@ export class UsersRepository extends TypeORMRepository<User> {
   }
 
   async findOneWithRoles(conditions: any): Promise<User> {
-    console.log(conditions);
     const query = User.createQueryBuilder('user')
       .leftJoinAndMapMany(
         'user.roles',
