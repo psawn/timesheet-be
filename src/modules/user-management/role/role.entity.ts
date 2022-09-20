@@ -3,9 +3,9 @@ import { Entity, Column } from 'typeorm';
 
 @Entity({ name: 'roles' })
 export class Role extends AbstractEntity {
-  @Column({ name: 'user_code' })
-  userCode: string;
+  @Column({ name: 'name' })
+  name: string;
 
-  @Column({ name: 'role_code' })
-  roleCode: string;
+  @Column({ name: 'code' })
+  code: string;
 }

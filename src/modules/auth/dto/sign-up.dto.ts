@@ -17,7 +17,7 @@ export class SignUpDto {
     description: 'Code',
     example: 'EMP001',
   })
-  @Transform(({ key: value }) => value.toUpperCase())
+  @Transform(({ value }) => value.toUpperCase())
   code: string;
 
   @IsNotEmpty()

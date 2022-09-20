@@ -17,7 +17,7 @@ import { RoleCodeEnum } from 'src/common/constants/role.enum';
 
 @Auth()
 @ApiTags('User')
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -29,7 +29,7 @@ export class UserController {
   })
   @customDecorators()
   async getAll(@Query(ValidationPipe) filterUsersDto: FilterUsersDto) {
-    const result = await this.userService.findByConditions(filterUsersDto);
+    const result = await this.userService.getAll(filterUsersDto);
     return { data: result.items, pagination: result.meta };
   }
 
@@ -41,12 +41,9 @@ export class UserController {
   @customDecorators()
   async update(
     @Req() request: any,
-    @Body(new ValidationPipe({ whitelist: true })) updateUserDto: UpdateUserDto,
+    @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ) {
     const data = await this.userService.update(request, updateUserDto);
-    return {
-      message: 'Update user successfully.',
-      data: data,
-    };
+    return { data: data };
   }
 }

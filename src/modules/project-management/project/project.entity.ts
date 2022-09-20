@@ -1,13 +1,16 @@
 import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
 import { Entity, Column } from 'typeorm';
 
-@Entity({ name: 'departments' })
-export class Department extends AbstractEntity {
+@Entity({ name: 'projects' })
+export class Project extends AbstractEntity {
   @Column({ name: 'name' })
   name: string;
 
   @Column({ name: 'code', unique: true })
   code: string;
+
+  @Column({ name: 'department_code', nullable: true })
+  departmentCode: string;
 
   @Column({ name: 'manager_code', nullable: true })
   managerCode: string;

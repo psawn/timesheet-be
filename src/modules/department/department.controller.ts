@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
@@ -7,7 +7,7 @@ import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { DepartmentsService } from './department.service';
-import { FilterDepartmentsDto } from './dto';
+import { CreateDepartmentDto, FilterDepartmentsDto } from './dto';
 
 @Auth()
 @ApiTags('Department')
@@ -31,5 +31,23 @@ export class DepartmentsController {
       filterDepartmentsDto,
     );
     return { data: result.items, pagination: result.meta };
+  }
+
+  @Post()
+  @Roles(RoleCodeEnum.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: 'Create department successfully.',
+  })
+  @customDecorators()
+  async createDepartment(
+    @AuthUser() user: AuthUserDto,
+    @Body() createDepartmentDto: CreateDepartmentDto,
+  ) {
+    const department = await this.departmentsService.createDepartment(
+      user,
+      createDepartmentDto,
+    );
+    return { data: department.id };
   }
 }

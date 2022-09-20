@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { DepartmentRepository } from './department.repository';
-import { FilterDepartmentsDto } from './dto';
+import { CreateDepartmentDto, FilterDepartmentsDto } from './dto';
 
 @Injectable()
 export class DepartmentsService {
@@ -13,8 +13,8 @@ export class DepartmentsService {
     const params = {};
 
     if (user.roles.includes(RoleCodeEnum.DER_MANAGER)) {
-      permissions.push('department.manager = :manager');
-      params['manager'] = user.code;
+      permissions.push('department.manager_code = :managerCode');
+      params['managerCode'] = user.code;
     }
 
     if (user.roles.includes(RoleCodeEnum.ADMIN)) {
@@ -31,6 +31,24 @@ export class DepartmentsService {
     return await this.departmentRepository.getAll(
       roleCondition,
       filterDepartmentsDto,
+    );
+  }
+
+  async createDepartment(
+    user: AuthUserDto,
+    createDepartmentDto: CreateDepartmentDto,
+  ) {
+    const existDepartment = await this.departmentRepository.findOneByConditions(
+      { where: { code: createDepartmentDto.code } },
+    );
+
+    if (existDepartment) {
+      throw new BadRequestException('Department already exists');
+    }
+
+    return await this.departmentRepository.createDepartment(
+      user,
+      createDepartmentDto,
     );
   }
 }

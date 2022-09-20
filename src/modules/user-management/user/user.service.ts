@@ -6,8 +6,8 @@ import { UserRepository } from './user.repository';
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async findByConditions(filterUsersDto: FilterUsersDto) {
-    const users = await this.userRepository.findByConditions(filterUsersDto);
+  async getAll(filterUsersDto: FilterUsersDto) {
+    const users = await this.userRepository.getAll(filterUsersDto);
 
     if (!users) {
       throw new NotFoundException();

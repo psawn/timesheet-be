@@ -8,7 +8,7 @@ import { User } from './user.entity';
 
 @Injectable()
 export class UserRepository extends TypeORMRepository<User> {
-  async findByConditions(filterUsersDto: FilterUsersDto) {
+  async getAll(filterUsersDto: FilterUsersDto) {
     const { page, limit, email } = filterUsersDto;
     const query = User.createQueryBuilder('user');
 

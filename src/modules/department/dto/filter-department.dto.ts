@@ -8,7 +8,7 @@ export class FilterDepartmentsDto extends PageLimitDto {
   @IsString()
   @ApiProperty({
     description: 'Name',
-    example: 'Timesheet',
+    example: 'DEV001',
     required: false,
   })
   name?: string;
