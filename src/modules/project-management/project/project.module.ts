@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
+import { ProjectUserRepository } from '../project-employee/project-employee.repository';
 import { ProjectController } from './project.controller';
 import { Project } from './project.entity';
 import { ProjectRepository } from './project.repository';
@@ -15,6 +16,7 @@ import { ProjectService } from './project.service';
     ProjectService,
     DepartmentRepository,
     UserRepository,
+    ProjectUserRepository,
   ],
   exports: [],
 })

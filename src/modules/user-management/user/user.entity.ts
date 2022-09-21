@@ -37,6 +37,9 @@ export class User extends AbstractEntity {
   @Column({ name: 'name', nullable: true })
   name: string;
 
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
+
   async validatePassword(password: string): Promise<boolean> {
     const hashPassword = await bcrypt.compare(password, this.password);
     return hashPassword;

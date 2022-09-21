@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
-import { ILike } from 'typeorm';
+import { EntityManager, ILike } from 'typeorm';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { User } from '../user-management/user/user.entity';
 import { Department } from './department.entity';
@@ -8,6 +8,11 @@ import { CreateDepartmentDto, FilterDepartmentsDto } from './dto';
 
 @Injectable()
 export class DepartmentRepository extends TypeORMRepository<Department> {
+  constructor(manager: EntityManager) {
+    super(Department, manager);
+  }
+  // can use both custom function and typeorm function with constructor
+
   async getAll(roleCondition: any, filterDepartmentsDto: FilterDepartmentsDto) {
     // const { page, limit, ...filterArr } = filterDepartmentsDto;
     const { page, limit, code, name } = filterDepartmentsDto;

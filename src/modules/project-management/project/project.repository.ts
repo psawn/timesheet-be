@@ -3,12 +3,16 @@ import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { Department } from 'src/modules/department/department.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
-import { ILike } from 'typeorm';
+import { EntityManager, ILike } from 'typeorm';
 import { CreateProjectDto, FilterProjectDto } from './dto';
 import { Project } from './project.entity';
 
 @Injectable()
 export class ProjectRepository extends TypeORMRepository<Project> {
+  constructor(manager: EntityManager) {
+    super(Project, manager);
+  }
+
   async getAll(roleCondition: any, filterProjectDto: FilterProjectDto) {
     const { page, limit, code, name, deparmentCode } = filterProjectDto;
     const query = Project.createQueryBuilder('project')
@@ -76,11 +80,11 @@ export class ProjectRepository extends TypeORMRepository<Project> {
   }
 
   async findOneByConditions(conditions: any) {
-    return await Department.findOne(conditions);
+    return await this.findOne(conditions);
   }
 
   async createProject(user: AuthUserDto, createProjectDto: CreateProjectDto) {
-    const project = Project.create({
+    const project = this.create({
       ...createProjectDto,
       createdBy: user.code,
     });

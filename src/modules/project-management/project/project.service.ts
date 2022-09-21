@@ -7,9 +7,11 @@ import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
-import { CreateProjectDto, FilterProjectDto } from './dto';
+import { UserCodesDto, CreateProjectDto, FilterProjectDto } from './dto';
 import { ProjectRepository } from './project.repository';
 import * as _ from 'lodash';
+import { In } from 'typeorm';
+import { ProjectUserRepository } from '../project-employee/project-employee.repository';
 
 @Injectable()
 export class ProjectService {
@@ -17,6 +19,7 @@ export class ProjectService {
     private readonly projectRepository: ProjectRepository,
     private readonly departmentRepository: DepartmentRepository,
     private readonly userRepository: UserRepository,
+    private readonly projectUserRepository: ProjectUserRepository,
   ) {}
 
   async getAll(user: AuthUserDto, filterProjectDto: FilterProjectDto) {
@@ -82,8 +85,6 @@ export class ProjectService {
       code: managerCode,
     });
 
-    console.log(existUser);
-
     if (!existUser) {
       throw new NotFoundException('User not found');
     }
@@ -98,5 +99,53 @@ export class ProjectService {
     }
 
     return await this.projectRepository.createProject(user, createProjectDto);
+  }
+
+  async addUsers(user: AuthUserDto, code: string, userCodesDto: UserCodesDto) {
+    const { userCodes } = userCodesDto;
+
+    const existProject = await this.projectRepository.findOneByConditions({
+      where: { managerCode: user.code, code },
+    });
+
+    if (!existProject) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const countUser = await this.userRepository.count({
+      where: { code: In(userCodes) },
+    });
+
+    if (countUser != userCodes.length) {
+      throw new NotFoundException('User not found');
+    }
+
+    const countUserInProject = await this.projectUserRepository.count({
+      where: { projectCode: code, userCode: In(userCodes) },
+    });
+
+    if (countUserInProject) {
+      throw new NotFoundException('User already in project');
+    }
+
+    await this.projectUserRepository.addUsers(code, userCodes);
+  }
+
+  async deleteUsers(
+    user: AuthUserDto,
+    code: string,
+    userCodesDto: UserCodesDto,
+  ) {
+    const { userCodes } = userCodesDto;
+
+    const existProject = await this.projectRepository.findOneByConditions({
+      where: { managerCode: user.code, code },
+    });
+
+    if (!existProject) {
+      throw new NotFoundException('Project not found');
+    }
+
+    await this.projectUserRepository.deleteUsers(code, userCodes);
   }
 }

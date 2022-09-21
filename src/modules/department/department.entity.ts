@@ -17,4 +17,7 @@ export class Department extends AbstractEntity {
 
   @Column({ name: 'updated_by', nullable: true })
   updatedBy: string;
+
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 }

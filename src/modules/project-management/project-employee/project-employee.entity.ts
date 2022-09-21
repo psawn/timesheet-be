@@ -2,16 +2,19 @@ import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
 import { Entity, Column } from 'typeorm';
 
 @Entity({ name: 'project-user' })
-export class ProjectEmployee extends AbstractEntity {
+export class ProjectUser extends AbstractEntity {
   @Column({ name: 'user_code', unique: true })
-  code: string;
+  userCode: string;
 
   @Column({ name: 'project_code', nullable: true })
-  departmentCode: string;
+  projectCode: string;
 
   @Column({ name: 'created_by', nullable: true })
   createdBy: string;
 
   @Column({ name: 'updated_by', nullable: true })
   updatedBy: string;
+
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 }

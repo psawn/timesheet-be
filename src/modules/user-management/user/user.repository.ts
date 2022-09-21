@@ -2,12 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { get } from 'lodash';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
+import { EntityManager } from 'typeorm';
 import { UserRole } from '../user-role/user-role.entity';
 import { FilterUsersDto } from './dto';
 import { User } from './user.entity';
 
 @Injectable()
 export class UserRepository extends TypeORMRepository<User> {
+  constructor(manager: EntityManager) {
+    super(User, manager);
+  }
+
   async getAll(filterUsersDto: FilterUsersDto) {
     const { page, limit, email } = filterUsersDto;
     const query = User.createQueryBuilder('user');
