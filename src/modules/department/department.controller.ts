@@ -6,14 +6,14 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
-import { DepartmentsService } from './department.service';
+import { DepartmentService } from './department.service';
 import { CreateDepartmentDto, FilterDepartmentsDto } from './dto';
 
 @Auth()
 @ApiTags('Department')
 @Controller('deparments')
-export class DepartmentsController {
-  constructor(private readonly departmentsService: DepartmentsService) {}
+export class DepartmentController {
+  constructor(private readonly departmentService: DepartmentService) {}
 
   @Get()
   @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER)
@@ -26,7 +26,7 @@ export class DepartmentsController {
     @AuthUser() user: AuthUserDto,
     @Query() filterDepartmentsDto: FilterDepartmentsDto,
   ) {
-    const result = await this.departmentsService.getAll(
+    const result = await this.departmentService.getAll(
       user,
       filterDepartmentsDto,
     );
@@ -44,10 +44,10 @@ export class DepartmentsController {
     @AuthUser() user: AuthUserDto,
     @Body() createDepartmentDto: CreateDepartmentDto,
   ) {
-    const department = await this.departmentsService.createDepartment(
+    const department = await this.departmentService.createDepartment(
       user,
       createDepartmentDto,
     );
-    return { data: department.id };
+    return { data: department.code };
   }
 }

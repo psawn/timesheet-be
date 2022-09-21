@@ -5,7 +5,7 @@ import { DepartmentRepository } from './department.repository';
 import { CreateDepartmentDto, FilterDepartmentsDto } from './dto';
 
 @Injectable()
-export class DepartmentsService {
+export class DepartmentService {
   constructor(private readonly departmentRepository: DepartmentRepository) {}
 
   async getAll(user: AuthUserDto, filterDepartmentsDto: FilterDepartmentsDto) {

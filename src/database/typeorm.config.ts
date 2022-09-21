@@ -12,5 +12,11 @@ export const typeOrmConfig: TypeOrmModule = {
   database: configService.db.database,
   logging: true,
   entities: ['dist/**/*.entity{.ts,.js}'],
+  migrationsRun: true,
+  migrationsTransactionMode: 'each',
+  migrations: [
+    'src/database/migrations/*.ts',
+    'dist/database/migrations/*{.ts,.js}',
+  ],
   synchronize: true,
 };

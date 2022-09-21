@@ -54,7 +54,7 @@ export class ProjectController {
       user,
       createProjectDto,
     );
-    return { data: project.id };
+    return { data: project.code };
   }
 
   @Post('/:code/add-users')

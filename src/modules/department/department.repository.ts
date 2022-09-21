@@ -16,7 +16,7 @@ export class DepartmentRepository extends TypeORMRepository<Department> {
   async getAll(roleCondition: any, filterDepartmentsDto: FilterDepartmentsDto) {
     // const { page, limit, ...filterArr } = filterDepartmentsDto;
     const { page, limit, code, name } = filterDepartmentsDto;
-    const query = Department.createQueryBuilder('department')
+    const query = this.createQueryBuilder('department')
       .leftJoinAndMapOne(
         'department.manager',
         User,
@@ -75,7 +75,7 @@ export class DepartmentRepository extends TypeORMRepository<Department> {
     user: AuthUserDto,
     createDepartmentDto: CreateDepartmentDto,
   ) {
-    const department = Department.create({
+    const department = this.create({
       ...createDepartmentDto,
       createdBy: user.code,
     });
@@ -84,10 +84,10 @@ export class DepartmentRepository extends TypeORMRepository<Department> {
   }
 
   async findOneByConditions(conditions: any) {
-    return await Department.findOne(conditions);
+    return await this.findOne(conditions);
   }
 
   async findByConditions(conditions: any) {
-    return await Department.find(conditions);
+    return await this.find(conditions);
   }
 }
