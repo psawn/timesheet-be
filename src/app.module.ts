@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmConfig } from './database/typeorm.config';
+import { DataBaseModule } from './database/database.module';
+// import { TypeOrmModule } from '@nestjs/typeorm';
+// import { typeOrmConfig } from './database/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { PolicyModule } from './modules/policy-management/policy/policy.module';
@@ -10,7 +11,8 @@ import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(typeOrmConfig),
+    // TypeOrmModule.forRoot(typeOrmConfig),
+    DataBaseModule,
     SharedModule,
     AuthModule,
     UserModule,
