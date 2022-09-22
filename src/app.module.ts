@@ -4,6 +4,7 @@ import { DataBaseModule } from './database/database.module';
 // import { typeOrmConfig } from './database/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { DepartmentModule } from './modules/department/department.module';
+import { PolicyApproverModule } from './modules/policy-management/policy-approver/policy-approver.module';
 import { PolicyModule } from './modules/policy-management/policy/policy.module';
 import { ProjectModule } from './modules/project-management/project/project.module';
 import { UserModule } from './modules/user-management/user/user.module';
@@ -19,6 +20,7 @@ import { SharedModule } from './shared/shared.module';
     DepartmentModule,
     ProjectModule,
     PolicyModule,
+    PolicyApproverModule,
   ],
   controllers: [],
   providers: [],

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  Patch,
   Post,
   Query,
   ValidationPipe,
@@ -13,7 +15,7 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
-import { CreatePolicyDto, FilterPoliciesDto } from './dto';
+import { CreatePolicyDto, FilterPoliciesDto, UpdatePolicyDto } from './dto';
 import { PolicyService } from './policy.service';
 
 @Auth()
@@ -34,6 +36,18 @@ export class PolicyController {
     return { data: result.items, pagination: result.meta };
   }
 
+  @Get('/:code')
+  @Roles(RoleCodeEnum.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: 'Get policy successfully.',
+  })
+  @customDecorators()
+  async get(@Param('code') code: string) {
+    const result = await this.policyService.get(code);
+    return { data: result };
+  }
+
   @Post()
   @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
@@ -47,5 +61,21 @@ export class PolicyController {
   ) {
     const policy = await this.policyService.createPolicy(user, createPolicyDto);
     return { data: policy.code };
+  }
+
+  @Patch('/:code')
+  @Roles(RoleCodeEnum.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: 'Update policy successfully.',
+  })
+  @customDecorators()
+  async updatePolicy(
+    @AuthUser() user: AuthUserDto,
+    @Param('code') code: string,
+    @Body(ValidationPipe) updatePolicyDto: UpdatePolicyDto,
+  ) {
+    await this.policyService.updatePolicy(user, code, updatePolicyDto);
+    return { data: code };
   }
 }

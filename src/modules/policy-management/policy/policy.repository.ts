@@ -3,7 +3,8 @@ import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { EntityManager, ILike } from 'typeorm';
-import { CreatePolicyDto, FilterPoliciesDto } from './dto';
+import { PolicyApproves } from '../policy-approver/policy-approver.entity';
+import { CreatePolicyDto, FilterPoliciesDto, UpdatePolicyDto } from './dto';
 import { Policy } from './policy.entity';
 
 @Injectable()
@@ -61,6 +62,19 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
     return this.paginate({ page, limit }, query);
   }
 
+  async get(code: string) {
+    const query = this.createQueryBuilder('policy')
+      .leftJoinAndMapMany(
+        'policy.approver',
+        PolicyApproves,
+        'approver',
+        'policy.code = approver.policyCode',
+      )
+      .where({ code });
+
+    return query.getOne();
+  }
+
   async createPolicy(user: AuthUserDto, createPolicyDto: CreatePolicyDto) {
     const policy = this.create({
       ...createPolicyDto,
@@ -68,5 +82,13 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
     });
 
     return await policy.save();
+  }
+
+  async updatePolicy(
+    user: AuthUserDto,
+    code: string,
+    updatePolicyDto: UpdatePolicyDto,
+  ) {
+    await this.update({ code }, { ...updatePolicyDto, updatedBy: user.code });
   }
 }

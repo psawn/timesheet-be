@@ -1,5 +1,5 @@
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
-import { PaginationConstants } from 'src/common/constants/pagination.constant';
+import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { Repository } from 'typeorm';
 
 export class TypeORMRepository<T> extends Repository<T> {

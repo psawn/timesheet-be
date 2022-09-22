@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { PolicyTypeRepository } from '../policy-type/policy-type.repository';
-import { CreatePolicyDto, FilterPoliciesDto } from './dto';
+import { CreatePolicyDto, FilterPoliciesDto, UpdatePolicyDto } from './dto';
 import { PolicyRepository } from './policy.repository';
 
 @Injectable()
@@ -17,6 +17,10 @@ export class PolicyService {
 
   async getAll(filterPoliciesDto: FilterPoliciesDto) {
     return await this.policyRepository.getAll(filterPoliciesDto);
+  }
+
+  async get(code: string) {
+    return await this.policyRepository.get(code);
   }
 
   async createPolicy(user: AuthUserDto, createPolicyDto: CreatePolicyDto) {
@@ -37,5 +41,31 @@ export class PolicyService {
     }
 
     return await this.policyRepository.createPolicy(user, createPolicyDto);
+  }
+
+  async updatePolicy(
+    user: AuthUserDto,
+    code: string,
+    updatePolicyDto: UpdatePolicyDto,
+  ) {
+    const existPolicy = await this.policyRepository.findOne({
+      where: { code },
+    });
+
+    if (!existPolicy) {
+      throw new NotFoundException('Policy not found');
+    }
+
+    if (updatePolicyDto.typeCode) {
+      const existPolicyType = await this.policyTypeRepository.findOne({
+        where: { code: updatePolicyDto.typeCode },
+      });
+
+      if (!existPolicyType) {
+        throw new NotFoundException('Policy type not found');
+      }
+    }
+
+    await this.policyRepository.updatePolicy(user, code, updatePolicyDto);
   }
 }

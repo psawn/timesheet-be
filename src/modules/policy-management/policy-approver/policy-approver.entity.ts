@@ -1,11 +1,8 @@
 import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
 import { Entity, Column } from 'typeorm';
 
-@Entity({ name: 'policy-approves' })
+@Entity({ name: 'policy-approvers' })
 export class PolicyApproves extends AbstractEntity {
-  @Column({ name: 'name' })
-  name: string;
-
   @Column({ name: 'policy_code', nullable: true })
   policyCode: string;
 
@@ -17,7 +14,4 @@ export class PolicyApproves extends AbstractEntity {
 
   @Column({ name: 'department_code', nullable: true })
   departmentCode: string;
-
-  @Column({ name: 'allow_all', default: false })
-  allowAll: boolean;
 }

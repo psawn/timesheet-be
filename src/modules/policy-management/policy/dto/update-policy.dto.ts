@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -11,8 +10,8 @@ import {
 } from 'class-validator';
 import { PolicyGroup } from 'src/common/constants/policy-group.enum';
 
-export class CreatePolicyDto {
-  @IsNotEmpty()
+export class UpdatePolicyDto {
+  @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'Name',
@@ -20,15 +19,7 @@ export class CreatePolicyDto {
   })
   name: string;
 
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty({
-    description: 'Code',
-    example: 'MISS_IN_001',
-  })
-  code: string;
-
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'Type code',
@@ -36,7 +27,6 @@ export class CreatePolicyDto {
   })
   typeCode: string;
 
-  @IsNotEmpty()
   @IsEnum(PolicyGroup)
   @ApiProperty({
     description: 'Group',
@@ -71,4 +61,12 @@ export class CreatePolicyDto {
     example: 0.5,
   })
   workDay: number;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'Is active',
+    example: false,
+  })
+  isActive: boolean;
 }
