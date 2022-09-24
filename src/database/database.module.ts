@@ -17,7 +17,7 @@ import { SharedModule } from 'src/shared/shared.module';
         password: configService.db.password,
         database: configService.db.database,
         entities: ['dist/**/*.entity.js'],
-        logging: true,
+        logging: false,
         synchronize: true,
         migrationsRun: true,
         migrationsTransactionMode: 'each',

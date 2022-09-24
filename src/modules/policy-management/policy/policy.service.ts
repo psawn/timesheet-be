@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { UserRepository } from 'src/modules/user-management/user/user.repository';
 import { PolicyTypeRepository } from '../policy-type/policy-type.repository';
 import { CreatePolicyDto, FilterPoliciesDto, UpdatePolicyDto } from './dto';
 import { PolicyRepository } from './policy.repository';
@@ -13,6 +14,7 @@ export class PolicyService {
   constructor(
     private readonly policyRepository: PolicyRepository,
     private readonly policyTypeRepository: PolicyTypeRepository,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async getAll(filterPoliciesDto: FilterPoliciesDto) {
@@ -67,5 +69,17 @@ export class PolicyService {
     }
 
     await this.policyRepository.updatePolicy(user, code, updatePolicyDto);
+  }
+
+  async getApprover(user: AuthUserDto, code: string) {
+    const existUser = await this.userRepository.findOne({
+      where: { code: user.code },
+    });
+
+    return await this.policyRepository.getApprover(
+      code,
+      existUser.managerCode,
+      existUser.department,
+    );
   }
 }

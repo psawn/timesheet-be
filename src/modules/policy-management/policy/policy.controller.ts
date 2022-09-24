@@ -78,4 +78,18 @@ export class PolicyController {
     await this.policyService.updatePolicy(user, code, updatePolicyDto);
     return { data: code };
   }
+
+  @Get('/:code/approver')
+  @ApiResponse({
+    status: 200,
+    description: 'Get approver successfully.',
+  })
+  @customDecorators()
+  async getApprover(
+    @AuthUser() user: AuthUserDto,
+    @Param('code') code: string,
+  ) {
+    const result = await this.policyService.getApprover(user, code);
+    return { data: result };
+  }
 }

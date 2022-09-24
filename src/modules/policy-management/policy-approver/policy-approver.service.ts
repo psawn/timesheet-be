@@ -61,8 +61,6 @@ export class PolicyApproverService {
       });
     });
 
-    await this.policyApproverRepository.delete({ policyCode });
-    const approvers = this.policyApproverRepository.create(data);
-    await this.policyApproverRepository.insert(approvers);
+    await this.policyApproverRepository.addApprover(data, policyCode);
   }
 }

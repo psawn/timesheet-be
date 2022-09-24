@@ -54,7 +54,13 @@ export class UserRepository extends TypeORMRepository<User> {
         'roles',
         'user.code = roles.userCode',
       )
-      .select(['user.id', 'user.code', 'roles.id', 'roles.roleCode'])
+      .select([
+        'user.id',
+        'user.code',
+        'roles.id',
+        'user.department',
+        'roles.roleCode',
+      ])
       .where(conditions);
 
     const user = await query.getOne();

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { get, pick } from 'lodash';
+import { ApproverTypeEnum } from 'src/common/constants/approver.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { Department } from 'src/modules/department/department.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { EntityManager, ILike } from 'typeorm';
 import { PolicyApproves } from '../policy-approver/policy-approver.entity';
@@ -90,5 +93,82 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
     updatePolicyDto: UpdatePolicyDto,
   ) {
     await this.update({ code }, { ...updatePolicyDto, updatedBy: user.code });
+  }
+
+  async getApprover(
+    code: string,
+    managerCode?: string,
+    departmentCode?: string,
+  ) {
+    const query = this.createQueryBuilder('policy')
+      .leftJoinAndMapOne(
+        'policy.approver',
+        PolicyApproves,
+        'approver',
+        'policy.code = approver.policyCode',
+      )
+      .leftJoinAndMapOne(
+        'approver.specificPerson',
+        User,
+        'specificPerson',
+        `(approver.approverType = :specificPersonType AND approver.approverCode = specificPerson.code)`,
+        {
+          specificPersonType: ApproverTypeEnum.SPECIFIC_PERSON,
+        },
+      )
+      .where({ code, isActive: true })
+      .andWhere('approver.departmentCode = :departmentCode', {
+        departmentCode,
+      });
+
+    if (managerCode) {
+      query.leftJoinAndMapOne(
+        'approver.directManager',
+        User,
+        'directManager',
+        `(approver.approverType = :directManagerType AND directManager.code = :managerCode)`,
+        {
+          directManagerType: ApproverTypeEnum.DIRECT_MANAGER,
+          managerCode,
+        },
+      );
+    }
+
+    if (departmentCode) {
+      query
+        .leftJoinAndMapOne(
+          'approver.department',
+          Department,
+          'department',
+          `(approver.approverType = 'DEPARTMENT_MANAGER' AND approver.departmentCode = department.code)`,
+          {
+            departmentCode,
+            approverType: ApproverTypeEnum.DEPARTMENT_MANAGER,
+          },
+        )
+        .leftJoinAndMapOne(
+          'department.departmentManager',
+          User,
+          'departmentManager',
+          'department.managerCode = departmentManager.code',
+        );
+    }
+
+    const data = await query.getOne();
+
+    if (data['approver'].approverType == ApproverTypeEnum.SPECIFIC_PERSON) {
+      return pick(get(data, 'approver.specificPerson'), ['id', 'code', 'name']);
+    }
+
+    if (data['approver'].approverType == ApproverTypeEnum.DIRECT_MANAGER) {
+      console.log('go thẻe');
+      return pick(get(data, 'approver.directManager'), ['id', 'code', 'name']);
+    }
+
+    return pick(get(data, 'approver.department.departmentManager'), [
+      'id',
+      'code',
+      'name',
+    ]);
   }
 }

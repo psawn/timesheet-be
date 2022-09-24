@@ -7,6 +7,7 @@ import { DepartmentModule } from './modules/department/department.module';
 import { PolicyApproverModule } from './modules/policy-management/policy-approver/policy-approver.module';
 import { PolicyModule } from './modules/policy-management/policy/policy.module';
 import { ProjectModule } from './modules/project-management/project/project.module';
+import { RequestModule } from './modules/request-management/request/request.module';
 import { UserModule } from './modules/user-management/user/user.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -21,6 +22,7 @@ import { SharedModule } from './shared/shared.module';
     ProjectModule,
     PolicyModule,
     PolicyApproverModule,
+    RequestModule,
   ],
   controllers: [],
   providers: [],
