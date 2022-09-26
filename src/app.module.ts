@@ -9,6 +9,7 @@ import { PolicyModule } from './modules/policy-management/policy/policy.module';
 import { ProjectModule } from './modules/project-management/project/project.module';
 import { RequestModule } from './modules/request-management/request/request.module';
 import { UserModule } from './modules/user-management/user/user.module';
+import { GenWorktimeStgModule } from './modules/worktime-management/general-worktime-setting/general-worktime-setting.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { SharedModule } from './shared/shared.module';
     PolicyModule,
     PolicyApproverModule,
     RequestModule,
+    GenWorktimeStgModule,
   ],
   controllers: [],
   providers: [],

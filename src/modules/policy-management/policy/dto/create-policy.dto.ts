@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -22,6 +23,7 @@ export class CreatePolicyDto {
 
   @IsNotEmpty()
   @IsString()
+  @Transform(({ key: value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Code',
     example: 'MISS_IN_001',

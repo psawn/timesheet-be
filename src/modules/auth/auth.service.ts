@@ -18,12 +18,10 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     const { email, password } = signInDto;
     const user = await this.userRepository.findOneByConditions({
-      where: {
-        email: email,
-      },
+      where: { email: email },
     });
 
-    if (user && user.validatePassword(password)) {
+    if (user && (await user.validatePassword(password))) {
       const payload = {
         id: user.id,
         email: user.email,

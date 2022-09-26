@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateDepartmentDto {
@@ -12,6 +13,7 @@ export class CreateDepartmentDto {
 
   @IsNotEmpty()
   @IsString()
+  @Transform(({ key: value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Code',
     example: 'DEV001',
