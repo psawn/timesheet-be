@@ -3,6 +3,7 @@ import { DataBaseModule } from './database/database.module';
 // import { TypeOrmModule } from '@nestjs/typeorm';
 // import { typeOrmConfig } from './database/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
+import { LeaveBenefitModule } from './modules/benefit-management/leave-benefit/leave-benefit.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { PolicyApproverModule } from './modules/policy-management/policy-approver/policy-approver.module';
 import { PolicyModule } from './modules/policy-management/policy/policy.module';
@@ -25,6 +26,7 @@ import { SharedModule } from './shared/shared.module';
     PolicyApproverModule,
     RequestModule,
     GenWorktimeStgModule,
+    LeaveBenefitModule,
   ],
   controllers: [],
   providers: [],

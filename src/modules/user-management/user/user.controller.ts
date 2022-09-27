@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Query,
-  Req,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -14,6 +14,8 @@ import { Roles } from 'src/decorators/role.decorator';
 import { FilterUsersDto, UpdateUserDto } from './dto';
 import { UserService } from './user.service';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
+import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { AuthUser } from 'src/decorators/user.decorator';
 
 @Auth()
 @ApiTags('User')
@@ -33,17 +35,19 @@ export class UserController {
     return { data: result.items, pagination: result.meta };
   }
 
-  @Patch()
+  @Patch('/:code')
+  @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
     status: 200,
     description: 'Update user successfully.',
   })
   @customDecorators()
   async update(
-    @Req() request: any,
+    @AuthUser() user: AuthUserDto,
+    @Param('code') code: string,
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ) {
-    const data = await this.userService.update(request, updateUserDto);
+    const data = await this.userService.update(user, code, updateUserDto);
     return { data: data };
   }
 }

@@ -10,4 +10,13 @@ export class UpdateUserDto {
     required: false,
   })
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Leave benefit code',
+    example: 'EMP',
+    required: false,
+  })
+  leaveBenefitCode: string;
 }

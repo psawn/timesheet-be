@@ -14,4 +14,7 @@ export class UserLeaveBenefit extends AbstractEntity {
 
   @Column({ name: 'year', type: 'int2' })
   year: number;
+
+  @Column({ name: 'standard_leave', type: 'float4', default: 0 })
+  standardLeave: number;
 }

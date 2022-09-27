@@ -11,4 +11,4 @@ import { LeaveBenefitService } from './leave-benefit.service';
   providers: [LeaveBenefitService, LeaveBenefitRepository],
   exports: [],
 })
-export class DepartmentModule {}
+export class LeaveBenefitModule {}
