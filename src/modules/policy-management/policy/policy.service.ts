@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { getApprover } from 'src/helpers/get-approver.helper';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
 import { PolicyTypeRepository } from '../policy-type/policy-type.repository';
@@ -72,14 +73,11 @@ export class PolicyService {
   }
 
   async getApprover(user: AuthUserDto, code: string) {
-    const existUser = await this.userRepository.findOne({
-      where: { code: user.code },
-    });
-
-    return await this.policyRepository.getApprover(
+    const policy = await this.policyRepository.getPolicyWithApprover(
       code,
-      existUser.managerCode,
-      existUser.department,
+      user.managerCode,
+      user.department,
     );
+    return getApprover(policy);
   }
 }

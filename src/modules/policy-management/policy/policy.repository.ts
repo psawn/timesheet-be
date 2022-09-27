@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { get, pick } from 'lodash';
 import { ApproverTypeEnum } from 'src/common/constants/approver.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
@@ -95,7 +94,7 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
     await this.update({ code }, { ...updatePolicyDto, updatedBy: user.code });
   }
 
-  async getApprover(
+  async getPolicyWithApprover(
     code: string,
     managerCode?: string,
     departmentCode?: string,
@@ -140,7 +139,7 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
           'approver.department',
           Department,
           'department',
-          `(approver.approverType = 'DEPARTMENT_MANAGER' AND approver.departmentCode = department.code)`,
+          `(approver.approverType = 'DEPARTMENT_MANAGER' AND approver.departmentCode = department.code AND department.isActive = true)`,
           {
             departmentCode,
             approverType: ApproverTypeEnum.DEPARTMENT_MANAGER,
@@ -156,19 +155,6 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
 
     const data = await query.getOne();
 
-    if (data['approver'].approverType == ApproverTypeEnum.SPECIFIC_PERSON) {
-      return pick(get(data, 'approver.specificPerson'), ['id', 'code', 'name']);
-    }
-
-    if (data['approver'].approverType == ApproverTypeEnum.DIRECT_MANAGER) {
-      console.log('go thẻe');
-      return pick(get(data, 'approver.directManager'), ['id', 'code', 'name']);
-    }
-
-    return pick(get(data, 'approver.department.departmentManager'), [
-      'id',
-      'code',
-      'name',
-    ]);
+    return data;
   }
 }

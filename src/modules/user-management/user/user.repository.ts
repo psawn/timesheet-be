@@ -57,8 +57,9 @@ export class UserRepository extends TypeORMRepository<User> {
       .select([
         'user.id',
         'user.code',
-        'roles.id',
         'user.department',
+        'user.managerCode',
+        'roles.id',
         'roles.roleCode',
       ])
       .where(conditions);
