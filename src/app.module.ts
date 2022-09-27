@@ -12,6 +12,7 @@ import { RequestModule } from './modules/request-management/request/request.modu
 import { UserModule } from './modules/user-management/user/user.module';
 import { GenWorktimeStgModule } from './modules/worktime-management/general-worktime-setting/general-worktime-setting.module';
 import { SharedModule } from './shared/shared.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SharedModule } from './shared/shared.module';
     RequestModule,
     GenWorktimeStgModule,
     LeaveBenefitModule,
+    CronModule,
   ],
   controllers: [],
   providers: [],

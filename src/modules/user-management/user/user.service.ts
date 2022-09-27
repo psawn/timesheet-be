@@ -67,7 +67,8 @@ export class UserService {
       return await userBenefit.save();
     }
 
-    const differentDays = benefit.standardLeave - existUserBenefit.standardLeave;
+    const differentDays =
+      benefit.standardLeave - existUserBenefit.standardLeave;
 
     existUserBenefit.remainingDay =
       differentDays > 0
