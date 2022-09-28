@@ -6,6 +6,7 @@ import { PageLimitDto } from 'src/common/dto/page-limit.dto';
 export class FilterRequestsDto extends PageLimitDto {
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Status',
     example: 'waiting',
@@ -15,6 +16,7 @@ export class FilterRequestsDto extends PageLimitDto {
 
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Policy code',
     example: 'MISS_IN_01',

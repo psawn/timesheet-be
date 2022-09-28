@@ -3,6 +3,7 @@ import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { Repository } from 'typeorm';
 
 export class TypeORMRepository<T> extends Repository<T> {
+  // only work with one to one relation
   async paginate({ page, limit }: IPaginationOptions, query: any) {
     const options = {
       page: page || PaginationConstants.DEFAULT_PAGE,
