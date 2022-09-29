@@ -160,7 +160,7 @@ export class RequestService {
       const query = this.requestRepository
         .createQueryBuilder('request')
         .leftJoinAndMapMany(
-          'request.date',
+          'request.dates',
           TimeRequestDate,
           'date',
           'request.id = date.requestId',
@@ -170,6 +170,13 @@ export class RequestService {
       const existRequest = await query.getOne();
 
       const group = get(existRequest, 'configPolicy.group', null);
+      const dates = get(existRequest, 'dates', null);
+
+      console.log('group', group);
+
+      console.log('policyType', existRequest.policyType);
+
+      console.log('dates', dates);
 
       if (!existRequest) {
         throw new NotFoundException('Request for approver not found');
@@ -179,6 +186,7 @@ export class RequestService {
         throw new BadRequestException('Request status is not WAITING');
       }
 
+      await this.handleMappingBusiness(group, existRequest.policyType, dates);
       // await this.entityManager.transaction(async (transaction) => {
       //   existRequest.status = status;
       //   transaction.save(TimeRequest, existRequest);
@@ -188,18 +196,25 @@ export class RequestService {
       //   }
       // });
     }
+  }
 
-    // const countRequest = await this.requestRepository.count({
-    //   where: { id: In(requestIds), approverCode: user.code },
-    // });
+  async handleMappingBusiness(
+    group: string,
+    policyType: string,
+    dates: TimeRequestDate[],
+  ) {
+    const functionMap = {
+      'ATTENDANCE,MISSING_IN': 'handleMissingCheckIn',
+      'ATTENDANCE,MISSING_OUT': 'handleMissingCheckOut',
+    };
+    await this[functionMap[`${group},${policyType}`]](dates);
+  }
 
-    // if (countRequest != requestIds.length) {
-    //   throw new NotFoundException('Request for approver not found');
-    // }
+  async handleMissingCheckIn(dates: TimeRequestDate[]) {
+    console.log('asdsad');
+  }
 
-    // await this.requestRepository.update(
-    //   { id: In(requestIds), approverCode: user.code },
-    //   { status },
-    // );
+  async handleMissingCheckOut(dates: TimeRequestDate[]) {
+    //
   }
 }
