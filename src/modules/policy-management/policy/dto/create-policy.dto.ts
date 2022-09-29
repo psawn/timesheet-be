@@ -11,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { PolicyGroup } from 'src/common/constants/policy-group.enum';
+import { RequestTypeCode } from 'src/common/constants/request-type-code.enum';
 
 export class CreatePolicyDto {
   @IsNotEmpty()
@@ -23,7 +24,7 @@ export class CreatePolicyDto {
 
   @IsNotEmpty()
   @IsString()
-  @Transform(({ key: value }) => value.toUpperCase())
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Code',
     example: 'MISS_IN_001',
@@ -31,10 +32,10 @@ export class CreatePolicyDto {
   code: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsEnum(RequestTypeCode)
   @ApiProperty({
     description: 'Type code',
-    example: 'MISSING_IN',
+    example: RequestTypeCode.AFTERNOON_ABSENT,
   })
   typeCode: string;
 
@@ -42,7 +43,7 @@ export class CreatePolicyDto {
   @IsEnum(PolicyGroup)
   @ApiProperty({
     description: 'Group',
-    example: PolicyGroup.OTHER,
+    example: PolicyGroup.ABSENCE,
     enum: PolicyGroup,
   })
   group: string;
