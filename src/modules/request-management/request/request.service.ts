@@ -6,15 +6,19 @@ import {
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { get, isEmpty, pick } from 'lodash';
 import * as moment from 'moment';
-import { PolicyGroup } from 'src/common/constants/policy-group.enum';
 import { RequestTypeCode } from 'src/common/constants/request-type-code.enum';
 import { StatusRequestEnum } from 'src/common/constants/status-request.enum';
 import { getApprover } from 'src/helpers/get-approver.helper';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { HolidayBenefitRepository } from 'src/modules/benefit-management/holiday-benefit/holiday-benefit.repository';
+import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
 import { PolicyRepository } from 'src/modules/policy-management/policy/policy.repository';
+import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
+import { User } from 'src/modules/user-management/user/user.entity';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
-import { EntityManager, In } from 'typeorm';
+import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { RequestDateDto } from '../request-date/dto/request-date.dto';
 import { TimeRequestDate } from '../request-date/request-date.entity';
 import {
   ChangeRequestStatus,
@@ -30,13 +34,14 @@ export class RequestService {
     private readonly requestRepository: RequestRepository,
     private readonly policyRepository: PolicyRepository,
     private readonly genWorktimeStgRepository: GenWorktimeStgRepository,
+    private readonly holidayBenefitRepository: HolidayBenefitRepository,
     @InjectEntityManager()
     private readonly entityManager: EntityManager,
   ) {}
 
   async createRequest(user: AuthUserDto, createRequestDto: CreateRequestDto) {
     const { policyCode } = createRequestDto;
-    let dates = createRequestDto.dates;
+    let dates = await this.checkDateTimeRq(createRequestDto.dates);
 
     const existPolicy = await this.policyRepository.getPolicyWithApprover(
       policyCode,
@@ -88,18 +93,25 @@ export class RequestService {
         throw new NotFoundException('Worktime not found');
       }
 
-      dates = dates.map((date) => {
-        const { endDate } = date;
-        const matchWt = worktimeStg['worktime'].find(
-          (wt) => wt.dayOfWeek == endDate.getUTCDay(),
-        );
-        return {
-          ...date,
-          startTime: matchWt.checkInTime,
-          endTime: matchWt.checkOutTime,
-        };
-      });
+      dates = dates
+        .map((date) => {
+          const { endDate } = date;
+          const matchWt = worktimeStg['worktime'].find(
+            (wt) => wt.dayOfWeek == endDate.getUTCDay() && wt.isDayOff == false,
+          );
+
+          if (matchWt) {
+            return {
+              ...date,
+              startTime: matchWt.checkInTime,
+              endTime: matchWt.checkOutTime,
+            };
+          }
+        })
+        .filter((item) => item !== undefined);
     }
+
+    console.log('dates', dates);
 
     return await this.entityManager.transaction(async (transaction) => {
       const request = transaction.create(TimeRequest, {
@@ -111,7 +123,7 @@ export class RequestService {
         policyType: existPolicy.typeCode,
       });
 
-      await request.save();
+      await transaction.save(TimeRequest, request);
 
       const savedDates = transaction.create(
         TimeRequestDate,
@@ -159,6 +171,12 @@ export class RequestService {
     for (const id of requestIds) {
       const query = this.requestRepository
         .createQueryBuilder('request')
+        .leftJoinAndMapOne(
+          'request.sender',
+          User,
+          'sender',
+          'request.userCode = sender.code',
+        )
         .leftJoinAndMapMany(
           'request.dates',
           TimeRequestDate,
@@ -172,11 +190,11 @@ export class RequestService {
       const group = get(existRequest, 'configPolicy.group', null);
       const dates = get(existRequest, 'dates', null);
 
-      console.log('group', group);
-
-      console.log('policyType', existRequest.policyType);
-
-      console.log('dates', dates);
+      const config = {
+        workDay: get(existRequest, 'configPolicy.workDay', null),
+        username: get(existRequest, 'sender.name', null),
+        userCode: existRequest.userCode,
+      };
 
       if (!existRequest) {
         throw new NotFoundException('Request for approver not found');
@@ -186,35 +204,163 @@ export class RequestService {
         throw new BadRequestException('Request status is not WAITING');
       }
 
-      await this.handleMappingBusiness(group, existRequest.policyType, dates);
-      // await this.entityManager.transaction(async (transaction) => {
-      //   existRequest.status = status;
-      //   transaction.save(TimeRequest, existRequest);
+      await this.entityManager.transaction(async (transaction) => {
+        existRequest.status = status;
+        transaction.save(TimeRequest, existRequest);
 
-      //   if (status == StatusRequestEnum.APPROVED) {
-      //     //
-      //   }
-      // });
+        if (status == StatusRequestEnum.APPROVED) {
+          await this.handleMappingBusiness(
+            transaction,
+            group,
+            existRequest.policyType,
+            dates,
+            config,
+          );
+        }
+      });
     }
   }
 
   async handleMappingBusiness(
+    transaction: EntityManager,
     group: string,
     policyType: string,
     dates: TimeRequestDate[],
+    config: any,
   ) {
     const functionMap = {
-      'ATTENDANCE,MISSING_IN': 'handleMissingCheckIn',
-      'ATTENDANCE,MISSING_OUT': 'handleMissingCheckOut',
+      ATTENDANCE: {
+        MISSING_IN: 'handleMissingCheckIn',
+        MISSING_OUT: 'handleMissingCheckOut',
+      },
+      ABSENCE: {
+        MORNING_ABSENT: 'handleAbsenct',
+        AFTERNOON_ABSENT: 'handleAbsenct',
+        FULL_DAY_ABSENT: 'handleAbsenct',
+      },
+      OTHER: {
+        REMOTE_WORKING: 'handleRemoteWorking',
+      },
     };
-    await this[functionMap[`${group},${policyType}`]](dates);
+    await this[functionMap[group][policyType]](transaction, dates, config);
   }
 
-  async handleMissingCheckIn(dates: TimeRequestDate[]) {
-    console.log('asdsad');
+  async handleMissingCheckIn(
+    transaction: EntityManager,
+    dates: TimeRequestDate[],
+    username: string,
+  ) {
+    for (const date of dates) {
+      const existTimecheck = await transaction.findOne(Timecheck, {
+        where: { checkDate: date.startDate, userCode: date.userCode },
+      });
+
+      if (existTimecheck) {
+        existTimecheck.checkInTime = date.startTime;
+        existTimecheck.missCheckIn = false;
+        existTimecheck.missCheckInSec = 0;
+
+        await transaction.save(Timecheck, existTimecheck);
+      } else {
+        const timecheck = transaction.create(Timecheck, {
+          checkDate: date.startDate,
+          checkInTime: date.startTime,
+          userCode: date.userCode,
+          username,
+        });
+
+        await transaction.save(Timecheck, timecheck);
+      }
+    }
   }
 
-  async handleMissingCheckOut(dates: TimeRequestDate[]) {
-    //
+  async handleMissingCheckOut(
+    transaction: EntityManager,
+    dates: TimeRequestDate[],
+    config: any,
+  ) {
+    for (const date of dates) {
+      const existTimecheck = await transaction.findOne(Timecheck, {
+        where: { checkDate: date.startDate, userCode: date.userCode },
+      });
+
+      if (existTimecheck) {
+        existTimecheck.checkOutTime = date.endTime;
+        existTimecheck.missCheckOut = false;
+        existTimecheck.missCheckOutSec = 0;
+
+        await transaction.save(Timecheck, existTimecheck);
+      } else {
+        const timecheck = transaction.create(Timecheck, {
+          checkDate: date.startDate,
+          checkOutTime: date.endTime,
+          userCode: date.userCode,
+          username: config.username,
+        });
+
+        await transaction.save(timecheck);
+      }
+    }
+  }
+
+  async handleAbsenct(
+    transaction: EntityManager,
+    dates: TimeRequestDate[],
+    config: any,
+  ) {
+    const existUserLeaveBnf = await transaction.findOne(UserLeaveBenefit, {
+      where: { year: new Date().getUTCFullYear(), userCode: config.userCode },
+    });
+    const leaveDay = config.workDay * dates.length;
+
+    if (existUserLeaveBnf) {
+      existUserLeaveBnf.remainingDay =
+        existUserLeaveBnf.remainingDay - leaveDay;
+      existUserLeaveBnf.usedDay = existUserLeaveBnf.usedDay + leaveDay;
+
+      await transaction.save(UserLeaveBenefit, existUserLeaveBnf);
+    }
+
+    for (const date of dates) {
+      const existTimecheck = await transaction.findOne(Timecheck, {
+        where: { checkDate: date.startDate, userCode: config.userCode },
+      });
+
+      const leaveHour = config.workDay * +process.env.DEFAULT_WORK_HOUR;
+
+      if (existTimecheck) {
+        existTimecheck.isLeaveBenefit = true;
+        existTimecheck.leaveHour = leaveHour;
+
+        await transaction.save(Timecheck, existTimecheck);
+      } else {
+        const timecheck = transaction.create(Timecheck, {
+          userCode: config.userCode,
+          username: config.username,
+          checkDate: date.startDate,
+          isLeaveBenefit: true,
+          leaveHour,
+        });
+
+        await transaction.save(Timecheck, timecheck);
+      }
+    }
+  }
+
+  async checkDateTimeRq(dates: RequestDateDto[]) {
+    const dateArr = [];
+    for (const date of dates) {
+      const countExistDate = await this.holidayBenefitRepository.count({
+        where: {
+          startDate: LessThanOrEqual(date.startDate),
+          endDate: MoreThanOrEqual(date.startDate),
+        },
+      });
+
+      if (!countExistDate) {
+        dateArr.push(date);
+      }
+    }
+    return dateArr;
   }
 }
