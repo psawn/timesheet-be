@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { get } from 'lodash';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
+import { FilterTimecheckDto } from 'src/modules/timecheck/dto';
+import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
+import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
+import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
 import { EntityManager } from 'typeorm';
 import { UserRole } from '../user-role/user-role.entity';
 import { FilterUsersDto } from './dto';
@@ -71,5 +75,77 @@ export class UserRepository extends TypeORMRepository<User> {
     });
 
     return user;
+  }
+
+  async getTimechecks(
+    filterTimecheckDto: FilterTimecheckDto,
+    conditions?: any,
+  ) {
+    const { page, limit, startDate, endDate } = filterTimecheckDto;
+    const offset = (page - 1) * limit;
+
+    const query = this.createQueryBuilder('user')
+      .leftJoinAndMapMany(
+        'user.timechecks',
+        Timecheck,
+        'timecheck',
+        'user.code = timecheck.userCode AND timecheck.checkDate >= :startDate AND timecheck.checkDate <= :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .select([
+        'user.id',
+        'user.code',
+        'user.name',
+        'timecheck.id',
+        'timecheck.checkDate',
+        'timecheck.checkInTime',
+        'timecheck.checkOutTime',
+        'timecheck.timezone',
+      ])
+      .where({ isActive: true })
+      .take(limit)
+      .skip(offset)
+      .orderBy('timecheck.checkDate', 'ASC');
+
+    if (conditions) {
+      query.andWhere(conditions);
+    }
+
+    const [items, totalItems] = await query.getManyAndCount();
+    return {
+      items,
+      pagination: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: +limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: +page,
+      },
+    };
+  }
+
+  async getUserWorktime(userCode: string, checkDate: Date) {
+    const query = this.createQueryBuilder('user')
+      .leftJoinAndMapOne(
+        'user.worktimeStg',
+        GeneralWorktimeSetting,
+        'worktimeStg',
+        'user.worktimeCode = worktimeStg.code',
+      )
+      .leftJoinAndMapOne(
+        'worktimeStg.worktime',
+        GeneralWorktime,
+        'worktime',
+        'worktimeStg.code = worktime.worktimeCode AND worktime.dayOfWeek = :dayOfWeek',
+        {
+          dayOfWeek: checkDate.getUTCDay(),
+        },
+      )
+      .where({ code: userCode });
+
+    return await query.getOne();
   }
 }

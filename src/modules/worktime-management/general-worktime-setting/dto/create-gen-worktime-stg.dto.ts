@@ -20,7 +20,7 @@ export class CreateGenWorktimeStgDto {
 
   @IsNotEmpty()
   @IsString()
-  @Transform(({ key: value }) => value.toUpperCase())
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Code',
     example: 'WT001',

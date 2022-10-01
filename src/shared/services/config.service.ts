@@ -36,6 +36,8 @@ export class ConfigService {
     REFRESH_JWT_SECRET: Joi.string().required(),
 
     BCRYPT_SALT: Joi.number().required().default(10),
+
+    DEFAULT_WORK_HOUR: Joi.number().required().default(8),
   };
 
   constructor() {
@@ -48,6 +50,9 @@ export class ConfigService {
       console.log(`No config file at path: ${defaultEnvConfigPath}`);
     } else {
       configs.push(defaultEnvConfig.parsed);
+    }
+
+    if (configs.length) {
       console.log(`Loaded config file at path: ${defaultEnvConfigPath}`);
     }
 
@@ -84,6 +89,10 @@ export class ConfigService {
     return Number(this.envConfig.BCRYPT_SALT);
   }
 
+  get defaultWorktimeHour(): number {
+    return Number(this.envConfig.WORKTIME_HOUR);
+  }
+
   private validateInput(
     ...envConfig: dotenv.DotenvParseOutput[]
   ): dotenv.DotenvParseOutput {
@@ -96,9 +105,11 @@ export class ConfigService {
     const envVarsSchema: Joi.ObjectSchema = Joi.object(this.validationScheme);
 
     const result = envVarsSchema.validate(mergedConfig, { allowUnknown: true });
+
     if (result.error) {
       throw new Error(`Config validation error: ${result.error.message}`);
     }
+
     return result.value;
   }
 }

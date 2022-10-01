@@ -73,45 +73,44 @@ export class RequestService {
       ? moment(new Date()).add(existPolicy.maxDaysProcess, 'days')
       : null;
 
-    if (
-      existPolicy.typeCode == RequestTypeCode.MISSING_IN ||
-      existPolicy.typeCode == RequestTypeCode.MISSING_OUT
-    ) {
-      const query = this.genWorktimeStgRepository
-        .createQueryBuilder('setting')
-        .leftJoinAndMapMany(
-          'setting.worktime',
-          GeneralWorktime,
-          'worktime',
-          'setting.code = worktime.workTimeCode',
-        )
-        .orderBy('worktime.dayOfWeek', 'ASC');
+    const query = this.genWorktimeStgRepository
+      .createQueryBuilder('setting')
+      .leftJoinAndMapMany(
+        'setting.worktime',
+        GeneralWorktime,
+        'worktime',
+        'setting.code = worktime.workTimeCode',
+      )
+      .orderBy('worktime.dayOfWeek', 'ASC');
 
-      const worktimeStg = await query.getOne();
+    const worktimeStg = await query.getOne();
 
-      if (!worktimeStg || !worktimeStg['worktime']) {
-        throw new NotFoundException('Worktime not found');
-      }
+    if (!worktimeStg || !worktimeStg['worktime']) {
+      throw new NotFoundException('Worktime not found');
+    }
 
-      dates = dates
-        .map((date) => {
-          const { endDate } = date;
-          const matchWt = worktimeStg['worktime'].find(
-            (wt) => wt.dayOfWeek == endDate.getUTCDay() && wt.isDayOff == false,
-          );
+    dates = dates
+      .map((date) => {
+        const { startDate } = date;
+        const matchWt = worktimeStg['worktime'].find(
+          (wt) => wt.dayOfWeek == startDate.getUTCDay() && wt.isDayOff == false,
+        );
 
-          if (matchWt) {
+        if (matchWt) {
+          if (
+            existPolicy.typeCode == RequestTypeCode.MISSING_IN ||
+            existPolicy.typeCode == RequestTypeCode.MISSING_OUT
+          ) {
             return {
               ...date,
               startTime: matchWt.checkInTime,
               endTime: matchWt.checkOutTime,
             };
           }
-        })
-        .filter((item) => item !== undefined);
-    }
-
-    console.log('dates', dates);
+          return { ...date };
+        }
+      })
+      .filter((item) => item !== undefined);
 
     return await this.entityManager.transaction(async (transaction) => {
       const request = transaction.create(TimeRequest, {
@@ -194,6 +193,7 @@ export class RequestService {
         workDay: get(existRequest, 'configPolicy.workDay', null),
         username: get(existRequest, 'sender.name', null),
         userCode: existRequest.userCode,
+        timezone: existRequest.timezone,
       };
 
       if (!existRequest) {
@@ -248,7 +248,7 @@ export class RequestService {
   async handleMissingCheckIn(
     transaction: EntityManager,
     dates: TimeRequestDate[],
-    username: string,
+    config: any,
   ) {
     for (const date of dates) {
       const existTimecheck = await transaction.findOne(Timecheck, {
@@ -258,7 +258,8 @@ export class RequestService {
       if (existTimecheck) {
         existTimecheck.checkInTime = date.startTime;
         existTimecheck.missCheckIn = false;
-        existTimecheck.missCheckInSec = 0;
+        existTimecheck.missCheckInMin = 0;
+        existTimecheck.timezone = config.timezone;
 
         await transaction.save(Timecheck, existTimecheck);
       } else {
@@ -266,7 +267,8 @@ export class RequestService {
           checkDate: date.startDate,
           checkInTime: date.startTime,
           userCode: date.userCode,
-          username,
+          username: config.username,
+          timezone: config.timezone,
         });
 
         await transaction.save(Timecheck, timecheck);
@@ -287,7 +289,8 @@ export class RequestService {
       if (existTimecheck) {
         existTimecheck.checkOutTime = date.endTime;
         existTimecheck.missCheckOut = false;
-        existTimecheck.missCheckOutSec = 0;
+        existTimecheck.missCheckOutMin = 0;
+        existTimecheck.timezone = config.timezone;
 
         await transaction.save(Timecheck, existTimecheck);
       } else {
@@ -296,6 +299,7 @@ export class RequestService {
           checkOutTime: date.endTime,
           userCode: date.userCode,
           username: config.username,
+          timezone: config.timezone,
         });
 
         await transaction.save(timecheck);
@@ -331,6 +335,7 @@ export class RequestService {
       if (existTimecheck) {
         existTimecheck.isLeaveBenefit = true;
         existTimecheck.leaveHour = leaveHour;
+        existTimecheck.timezone = config.timezone;
 
         await transaction.save(Timecheck, existTimecheck);
       } else {
@@ -340,6 +345,7 @@ export class RequestService {
           checkDate: date.startDate,
           isLeaveBenefit: true,
           leaveHour,
+          timezone: config.timezone,
         });
 
         await transaction.save(Timecheck, timecheck);

@@ -10,7 +10,7 @@ export class GeneralWorktime extends AbstractEntity {
   isDayOff: boolean;
 
   @Column({ name: 'work_time_code', nullable: true })
-  workTimeCode: string;
+  worktimeCode: string;
 
   @Column({ name: 'check_in_time', type: 'time', nullable: true })
   checkInTime: string;

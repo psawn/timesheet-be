@@ -19,4 +19,13 @@ export class UpdateUserDto {
     required: false,
   })
   leaveBenefitCode: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Worktime code',
+    example: 'WT',
+    required: false,
+  })
+  worktimeCode: string;
 }

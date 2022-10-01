@@ -18,11 +18,11 @@ export class Timecheck extends AbstractEntity {
   @Column({ name: 'check_out_time', type: 'time', nullable: true })
   checkOutTime: string;
 
-  @Column({ name: 'miss_check_in_sec', type: 'int2', default: 0 })
-  missCheckInSec: number;
+  @Column({ name: 'miss_check_in_min', type: 'int2', default: 0 })
+  missCheckInMin: number;
 
-  @Column({ name: 'miss_check_out_sec', type: 'int2', default: 0 })
-  missCheckOutSec: number;
+  @Column({ name: 'miss_check_out_min', type: 'int2', default: 0 })
+  missCheckOutMin: number;
 
   @Column({ name: 'miss_check_in', type: 'boolean', default: false })
   missCheckIn: boolean;
@@ -36,6 +36,15 @@ export class Timecheck extends AbstractEntity {
   @Column({ name: 'leave_hour', type: 'float4', default: 0 })
   leaveHour: number;
 
-  @Column({ name: 'work_hour', type: 'float4', default: 0 })
+  @Column({
+    name: 'work_hour',
+    type: 'numeric',
+    precision: 3,
+    scale: 1,
+    default: 0,
+  })
   workHour: number;
+
+  @Column({ name: 'timezone', type: 'int2', default: 0 })
+  timezone: number;
 }

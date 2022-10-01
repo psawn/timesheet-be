@@ -6,6 +6,7 @@ import { LeaveBenefitRepository } from 'src/modules/benefit-management/leave-ben
 import { UserLeaveBenefitRepository } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.repository';
 import { FilterUsersDto, UpdateUserDto } from './dto';
 import { UserRepository } from './user.repository';
+import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 
 @Injectable()
 export class UserService {
@@ -13,6 +14,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly leaveBenefitRepository: LeaveBenefitRepository,
     private readonly userLeaveBenefitRepository: UserLeaveBenefitRepository,
+    private readonly genWorktimeStgRepository: GenWorktimeStgRepository,
   ) {}
 
   async getAll(filterUsersDto: FilterUsersDto) {
@@ -30,14 +32,20 @@ export class UserService {
   }
 
   async update(user: AuthUserDto, code: string, updateUserDto: UpdateUserDto) {
+    const { leaveBenefitCode, worktimeCode } = updateUserDto;
     const existUser = await this.userRepository.findOne({
       where: { code },
     });
+
+    if (!existUser) {
+      throw new NotFoundException('User not found');
+    }
+
     const data = { ...updateUserDto, id: existUser.id, updatedBy: user.code };
 
-    if (updateUserDto.leaveBenefitCode) {
+    if (leaveBenefitCode) {
       const existBenefit = await this.leaveBenefitRepository.findOne({
-        where: { code: updateUserDto.leaveBenefitCode },
+        where: { code: leaveBenefitCode },
       });
 
       if (!existBenefit) {
@@ -45,6 +53,16 @@ export class UserService {
       }
 
       await this.updateUserBenefit(user.code, existBenefit);
+    }
+
+    if (worktimeCode) {
+      const worktime = await this.genWorktimeStgRepository.findOne({
+        where: { code: worktimeCode },
+      });
+
+      if (!worktime) {
+        throw new NotFoundException('Worktime not found');
+      }
     }
 
     return await this.userRepository.update(data);
