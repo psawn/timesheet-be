@@ -47,4 +47,7 @@ export class Timecheck extends AbstractEntity {
 
   @Column({ name: 'timezone', type: 'int2', default: 0 })
   timezone: number;
+
+  @Column({ name: 'is_day_off', type: 'boolean', default: false })
+  isDayOff: boolean;
 }

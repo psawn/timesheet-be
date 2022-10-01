@@ -2,7 +2,7 @@ import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
 import { StatusRequestEnum } from 'src/common/constants/status-request.enum';
 import { Entity, Column } from 'typeorm';
 
-@Entity({ name: 'request' })
+@Entity({ name: 'requests' })
 export class TimeRequest extends AbstractEntity {
   @Column({ name: 'status', default: StatusRequestEnum.WAITING })
   status: string;

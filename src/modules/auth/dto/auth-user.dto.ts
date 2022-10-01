@@ -6,4 +6,5 @@ export class AuthUserDto {
   public readonly roles: RoleCodeEnum[];
   public readonly department: string;
   public readonly managerCode: string;
+  public readonly name: string;
 }

@@ -18,6 +18,7 @@ import { User } from 'src/modules/user-management/user/user.entity';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
 import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { RemoteWorking } from '../remote-working/remote-working.entity';
 import { RequestDateDto } from '../request-date/dto/request-date.dto';
 import { TimeRequestDate } from '../request-date/request-date.entity';
 import {
@@ -79,7 +80,7 @@ export class RequestService {
         'setting.worktime',
         GeneralWorktime,
         'worktime',
-        'setting.code = worktime.workTimeCode',
+        'setting.code = worktime.worktimeCode',
       )
       .orderBy('worktime.dayOfWeek', 'ASC');
 
@@ -194,6 +195,7 @@ export class RequestService {
         username: get(existRequest, 'sender.name', null),
         userCode: existRequest.userCode,
         timezone: existRequest.timezone,
+        approverCode: existRequest.approverCode,
       };
 
       if (!existRequest) {
@@ -368,5 +370,26 @@ export class RequestService {
       }
     }
     return dateArr;
+  }
+
+  async handleRemoteWorking(
+    transaction: EntityManager,
+    dates: TimeRequestDate[],
+    config: any,
+  ) {
+    const remoteWorkings = transaction.create(
+      RemoteWorking,
+      dates.map((date) => {
+        const { startDate, endDate, requestId } = date;
+        return {
+          startDate,
+          endDate,
+          requestId,
+          approverCode: config.approverCode,
+          userCode: config.userCode,
+        };
+      }),
+    );
+    await transaction.save(RemoteWorking, remoteWorkings);
   }
 }
