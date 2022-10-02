@@ -14,6 +14,7 @@ import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { CheckInDto, FilterTimecheckDto } from './dto';
+import { Test } from './dto/abc.dto';
 import { TimecheckService } from './timecheck.service';
 
 @Auth()
@@ -65,5 +66,16 @@ export class TimecheckController {
   ) {
     const timecheck = await this.timecheckSerive.checkIn(user, checkInDto);
     return { data: timecheck };
+  }
+
+  @Post('/get-total')
+  @ApiResponse({
+    status: 200,
+    description: 'Get my timechecks successfully.',
+  })
+  @customDecorators()
+  async abc(@Body() test: Test) {
+    const result = await this.timecheckSerive.getTotalWorkingDays(test);
+    return { data: result };
   }
 }

@@ -6,9 +6,12 @@ import * as moment from 'moment';
 import { calculateDiffMin } from 'src/helpers/calculate-diff-minute.helper';
 import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
+import { HolidayBenefitRepository } from '../benefit-management/holiday-benefit/holiday-benefit.repository';
 import { RemoteWorkingRepository } from '../request-management/remote-working/remote-working.repository';
 import { UserRepository } from '../user-management/user/user.repository';
+import { GenWorktimeRepository } from '../worktime-management/general-worktime/general-worktime.repository';
 import { CheckInDto, FilterTimecheckDto } from './dto';
+import { Test } from './dto/abc.dto';
 import { Timecheck } from './timecheck.entity';
 import { TimecheckRepository } from './timecheck.repository';
 
@@ -18,6 +21,8 @@ export class TimecheckService {
     private readonly timecheckRepository: TimecheckRepository,
     private readonly userRepository: UserRepository,
     private readonly remoteWorkingRepository: RemoteWorkingRepository,
+    private readonly genWorktimeRepository: GenWorktimeRepository,
+    private readonly holidayBenefitRepository: HolidayBenefitRepository,
     @InjectEntityManager()
     private readonly entityManager: EntityManager,
   ) {}
@@ -65,8 +70,6 @@ export class TimecheckService {
       checkDate,
     );
 
-    console.log(worktime);
-
     const worktimCheckIn = get(
       worktime,
       'worktimeStg.worktime.checkInTime',
@@ -78,8 +81,6 @@ export class TimecheckService {
       null,
     );
     const isDayOff = get(worktime, 'worktimeStg.worktime.isDayOff', false);
-
-    console.log(isDayOff);
 
     if (!worktimCheckIn || !worktimeCheckOut) {
       throw new NotFoundException('Worktime not found');
@@ -130,5 +131,50 @@ export class TimecheckService {
         return await transaction.save(Timecheck, timecheck);
       }
     });
+  }
+
+  async getTotalWorkingDays(test: Test) {
+    const dayOffs = await this.genWorktimeRepository.getWorktime(
+      test.worktimeCode,
+    );
+
+    const dayOffArr = dayOffs.map((dayOff) => {
+      return dayOff.dayOfWeek;
+    });
+
+    const holidays = await this.holidayBenefitRepository.getHolidays(
+      test.startDate,
+      test.endDate,
+    );
+
+    const startDate = new Date(test.startDate);
+    const endDate = new Date(test.endDate);
+
+    let count = 0;
+    const curDate = new Date(startDate.getTime());
+
+    while (curDate <= endDate) {
+      const dayOfWeek = curDate.getDay();
+
+      if (!dayOffArr.includes(dayOfWeek)) {
+        count++;
+        holidays.map((holiday) => {
+          const isHoliday = moment(curDate).isBetween(
+            moment(holiday.startDate),
+            moment(holiday.endDate),
+            null,
+            '[]',
+          );
+
+          if (isHoliday) {
+            count--;
+          }
+        });
+      }
+
+      curDate.setDate(curDate.getDate() + 1);
+    }
+
+    console.log(count);
   }
 }

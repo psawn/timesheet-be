@@ -104,7 +104,15 @@ export class UserRepository extends TypeORMRepository<User> {
         'timecheck.checkDate',
         'timecheck.checkInTime',
         'timecheck.checkOutTime',
+        'timecheck.missCheckInMin',
+        'timecheck.missCheckOutMin',
+        'timecheck.missCheckIn',
+        'timecheck.missCheckOut',
+        'timecheck.isLeaveBenefit',
+        'timecheck.leaveHour',
+        'timecheck.workHour',
         'timecheck.timezone',
+        'timecheck.isDayOff',
       ])
       .where({ isActive: true })
       .take(limit)

@@ -42,6 +42,15 @@ export class Timecheck extends AbstractEntity {
     precision: 3,
     scale: 1,
     default: 0,
+    transformer: {
+      to(value) {
+        return value;
+      },
+      from(value) {
+        return +value;
+        // convert to number, numeric is a string
+      },
+    },
   })
   workHour: number;
 
