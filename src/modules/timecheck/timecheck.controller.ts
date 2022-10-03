@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Query,
+  Res,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -13,9 +14,9 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
-import { CheckInDto, FilterTimecheckDto } from './dto';
-import { Test } from './dto/abc.dto';
+import { CheckInDto, ExcelTimecheckDto, FilterTimecheckDto } from './dto';
 import { TimecheckService } from './timecheck.service';
+import { Response } from 'express';
 
 @Auth()
 @ApiTags('Timecheck')
@@ -68,14 +69,30 @@ export class TimecheckController {
     return { data: timecheck };
   }
 
-  @Post('/get-total')
+  @Get('/export')
   @ApiResponse({
     status: 200,
-    description: 'Get my timechecks successfully.',
+    description: 'Export timechecks successfully.',
   })
   @customDecorators()
-  async abc(@Body() test: Test) {
-    const result = await this.timecheckSerive.getTotalWorkingDays(test);
-    return { data: result };
+  async getExcel(
+    @Query(ValidationPipe) excelTimecheckDto: ExcelTimecheckDto,
+    @Res() res: Response,
+  ) {
+    const fileName = `timecheck-report-${new Date().getTime()}.xlsx`;
+    const workbook = await this.timecheckSerive.getDataExport(
+      excelTimecheckDto,
+    );
+    res.set(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=' + `${fileName}.xlsx`,
+    );
+    return workbook.xlsx.write(res).then(function () {
+      res.status(200).end();
+    });
   }
 }

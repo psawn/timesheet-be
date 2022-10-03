@@ -82,7 +82,7 @@ export class UserRepository extends TypeORMRepository<User> {
     filterTimecheckDto: FilterTimecheckDto,
     conditions?: any,
   ) {
-    const { page, limit, startDate, endDate } = filterTimecheckDto;
+    const { page, limit, startDate, endDate, getAll } = filterTimecheckDto;
     const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('user')
@@ -115,9 +115,11 @@ export class UserRepository extends TypeORMRepository<User> {
         'timecheck.isDayOff',
       ])
       .where({ isActive: true })
-      .take(limit)
-      .skip(offset)
       .orderBy('timecheck.checkDate', 'ASC');
+
+    if (!getAll) {
+      query.take(limit).skip(offset);
+    }
 
     if (conditions) {
       query.andWhere(conditions);

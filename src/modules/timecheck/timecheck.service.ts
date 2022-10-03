@@ -11,20 +11,22 @@ import { RemoteWorkingRepository } from '../request-management/remote-working/re
 import { UserRepository } from '../user-management/user/user.repository';
 import { GenWorktimeRepository } from '../worktime-management/general-worktime/general-worktime.repository';
 import { CheckInDto, FilterTimecheckDto } from './dto';
-import { Test } from './dto/abc.dto';
+import { ExcelTimecheckDto } from './dto/excel-timecheck.dto';
 import { Timecheck } from './timecheck.entity';
 import { TimecheckRepository } from './timecheck.repository';
+import * as excel from 'exceljs';
+import { toDay } from 'src/helpers/to-date.helper';
 
 @Injectable()
 export class TimecheckService {
   constructor(
+    @InjectEntityManager()
+    private readonly entityManager: EntityManager,
     private readonly timecheckRepository: TimecheckRepository,
     private readonly userRepository: UserRepository,
     private readonly remoteWorkingRepository: RemoteWorkingRepository,
     private readonly genWorktimeRepository: GenWorktimeRepository,
     private readonly holidayBenefitRepository: HolidayBenefitRepository,
-    @InjectEntityManager()
-    private readonly entityManager: EntityManager,
   ) {}
 
   async getAll(filterTimecheckDto: FilterTimecheckDto) {
@@ -133,9 +135,9 @@ export class TimecheckService {
     });
   }
 
-  async getTotalWorkingDays(test: Test) {
+  async getTotalWorkingDays(excelTimecheckDto: ExcelTimecheckDto) {
     const dayOffs = await this.genWorktimeRepository.getWorktime(
-      test.worktimeCode,
+      excelTimecheckDto.worktimeCode,
     );
 
     const dayOffArr = dayOffs.map((dayOff) => {
@@ -143,12 +145,12 @@ export class TimecheckService {
     });
 
     const holidays = await this.holidayBenefitRepository.getHolidays(
-      test.startDate,
-      test.endDate,
+      excelTimecheckDto.startDate,
+      excelTimecheckDto.endDate,
     );
 
-    const startDate = new Date(test.startDate);
-    const endDate = new Date(test.endDate);
+    const startDate = new Date(excelTimecheckDto.startDate);
+    const endDate = new Date(excelTimecheckDto.endDate);
 
     let count = 0;
     const curDate = new Date(startDate.getTime());
@@ -175,6 +177,117 @@ export class TimecheckService {
       curDate.setDate(curDate.getDate() + 1);
     }
 
-    console.log(count);
+    return count;
+  }
+
+  async getDataExport(excelTimecheckDto: ExcelTimecheckDto) {
+    const { worktimeCode, startDate, endDate } = excelTimecheckDto;
+    const conditions = { worktimeCode };
+
+    const filterTimecheckDto: FilterTimecheckDto = {
+      startDate,
+      endDate,
+      getAll: true,
+    };
+    const totalWorkingDays = await this.getTotalWorkingDays(excelTimecheckDto);
+    const { items } = await this.userRepository.getTimechecks(
+      filterTimecheckDto,
+      conditions,
+    );
+
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('timecheck');
+    const columns = [
+      { header: 'User name', key: 'user', style: { numFmt: '@' } },
+    ];
+    const curDate = new Date(startDate);
+    const toDate = new Date(endDate);
+    const firstRow = { user: '' };
+
+    while (curDate <= toDate) {
+      const day = toDay(curDate);
+      firstRow[`${curDate.getDate().toString()}`] = day;
+      columns.push({
+        header: curDate.getDate().toString(),
+        key: curDate.getDate().toString(),
+        style: { numFmt: '@' },
+      });
+      curDate.setDate(curDate.getDate() + 1);
+    }
+
+    columns.push(
+      ...[
+        {
+          header: 'Working Days',
+          key: 'workingDays',
+          style: { numFmt: '@' },
+        },
+        {
+          header: 'Total Working Days',
+          key: 'totalWorkingDays',
+          style: { numFmt: '@' },
+        },
+        {
+          header: 'Working Hours',
+          key: 'workingHours',
+          style: { numFmt: '@' },
+        },
+        {
+          header: 'Total Working Hours',
+          key: 'totalWorkingHours',
+          style: { numFmt: '@' },
+        },
+      ],
+    );
+
+    worksheet.columns = columns;
+    worksheet.addRow(firstRow).commit();
+    worksheet.mergeCells('A1:A2');
+    worksheet.mergeCells('AG1:AG2');
+    worksheet.mergeCells('AH1:AH2');
+    worksheet.mergeCells('AI1:AI2');
+    worksheet.mergeCells('AJ1:AJ2');
+
+    let rowIndex = 1;
+    for (rowIndex; rowIndex <= worksheet.rowCount; rowIndex++) {
+      worksheet.getRow(rowIndex).alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+    }
+
+    items.map((item) => {
+      const objRow = {
+        user: item.name,
+      };
+      const timechecks = get(item, 'timechecks', []);
+      let workingHours = 0;
+      timechecks.map((timecheck) => {
+        let worktime = 0;
+
+        if (timecheck.isLeaveBenefit) {
+          worktime = timecheck.leaveHour;
+        } else {
+          if (!timecheck.isDayOff) {
+            worktime =
+              timecheck.workHour >= process.env.DEFAULT_WORK_HOUR
+                ? process.env.DEFAULT_WORK_HOUR
+                : timecheck.workHour;
+          }
+        }
+
+        workingHours += worktime;
+        objRow[`${new Date(timecheck.checkDate).getDate()}`] = worktime;
+      });
+      objRow['workingDays'] = workingHours / +process.env.DEFAULT_WORK_HOUR;
+      objRow['totalWorkingDays'] = totalWorkingDays;
+      objRow['workingHours'] = workingHours;
+      objRow['totalWorkingHours'] =
+        totalWorkingDays * +process.env.DEFAULT_WORK_HOUR;
+      worksheet.addRow(objRow).commit();
+    });
+
+    return workbook;
   }
 }
