@@ -18,13 +18,7 @@ export class UserService {
   ) {}
 
   async getAll(filterUsersDto: FilterUsersDto) {
-    const users = await this.userRepository.getAll(filterUsersDto);
-
-    if (!users) {
-      throw new NotFoundException();
-    }
-
-    return users;
+    return await this.userRepository.getAll(filterUsersDto);
   }
 
   async findOneByConditions(conditions: any) {
