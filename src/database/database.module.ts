@@ -19,7 +19,7 @@ import { SharedModule } from 'src/shared/shared.module';
         entities: ['dist/**/*.entity.js'],
         logging: false,
         synchronize: true,
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: [
           // 'src/database/migrations/*.ts',
