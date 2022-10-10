@@ -21,6 +21,16 @@ jobs:
     - name: Login to aws ecr
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, Tag, and Push the Image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: timesheet-ft
+        IMAGE_TAG: latest
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         
     - name: Execute SSH commmands on remote server
       id: ec2-command
@@ -34,6 +44,8 @@ jobs:
         privateKey: ${{ secrets.EC2_SSH_KEY }}
         debug: false
         command: |
-          docker image prune -a -y
+          hostname -a
+          whoami
           ls -a
-          docker image ls -a
+          sudo systemctl start docker
+          docker-compose up -d
