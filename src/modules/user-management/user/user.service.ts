@@ -7,6 +7,8 @@ import { UserLeaveBenefitRepository } from 'src/modules/benefit-management/user-
 import { FilterUsersDto, UpdateUserDto } from './dto';
 import { UserRepository } from './user.repository';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
+import { DepartmentRepository } from 'src/modules/department/department.repository';
+import { UserRoleRepository } from '../user-role/user-role.repository';
 
 @Injectable()
 export class UserService {
@@ -15,6 +17,8 @@ export class UserService {
     private readonly leaveBenefitRepository: LeaveBenefitRepository,
     private readonly userLeaveBenefitRepository: UserLeaveBenefitRepository,
     private readonly genWorktimeStgRepository: GenWorktimeStgRepository,
+    private readonly departmentRepository: DepartmentRepository,
+    private readonly userRoleRepository: UserRoleRepository,
   ) {}
 
   async getAll(filterUsersDto: FilterUsersDto) {
@@ -26,7 +30,7 @@ export class UserService {
   }
 
   async update(user: AuthUserDto, code: string, updateUserDto: UpdateUserDto) {
-    const { leaveBenefitCode, worktimeCode } = updateUserDto;
+    const { leaveBenefitCode, worktimeCode, department } = updateUserDto;
     const existUser = await this.userRepository.findOne({
       where: { code },
     });
@@ -56,6 +60,16 @@ export class UserService {
 
       if (!worktime) {
         throw new NotFoundException('Worktime not found');
+      }
+    }
+
+    if (department) {
+      const existDepartment = await this.departmentRepository.findOne({
+        where: { code: department },
+      });
+
+      if (!existDepartment) {
+        throw new NotFoundException('Department not found');
       }
     }
 
@@ -89,5 +103,15 @@ export class UserService {
     existUserBenefit.standardLeave = benefit.standardLeave;
 
     return await existUserBenefit.save();
+  }
+
+  async getOwnersInfo(code: string) {
+    return await this.userRepository.getOwnersInfo(code);
+  }
+
+  async getRoles(code: string) {
+    return await this.userRoleRepository.find({
+      where: { userCode: code },
+    });
   }
 }

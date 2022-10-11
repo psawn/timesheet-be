@@ -31,8 +31,8 @@ export class UserController {
   })
   @customDecorators()
   async getAll(@Query(ValidationPipe) filterUsersDto: FilterUsersDto) {
-    const result = await this.userService.getAll(filterUsersDto);
-    return { data: result.items, pagination: result.meta };
+    const { items, pagination } = await this.userService.getAll(filterUsersDto);
+    return { data: items, pagination };
   }
 
   @Patch('/:code')
@@ -48,6 +48,28 @@ export class UserController {
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ) {
     const data = await this.userService.update(user, code, updateUserDto);
-    return { data: data };
+    return { data };
+  }
+
+  @Get('/me')
+  @ApiResponse({
+    status: 200,
+    description: 'Get user information successfully.',
+  })
+  @customDecorators()
+  async getOwnersInfo(@AuthUser() user: AuthUserDto) {
+    const data = await this.userService.getOwnersInfo(user.code);
+    return { data };
+  }
+
+  @Get('/roles')
+  @ApiResponse({
+    status: 200,
+    description: 'Get user roles successfully.',
+  })
+  @customDecorators()
+  async getRoles(@AuthUser() user: AuthUserDto) {
+    const data = await this.userService.getRoles(user.code);
+    return { data };
   }
 }

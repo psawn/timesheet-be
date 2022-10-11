@@ -44,6 +44,10 @@ export class RequestService {
     const { policyCode } = createRequestDto;
     let dates = await this.checkDateTimeRq(createRequestDto.dates);
 
+    if (!user.department) {
+      throw new BadRequestException(`User dont's have department`);
+    }
+
     const existPolicy = await this.policyRepository.getPolicyWithApprover(
       policyCode,
       user.managerCode,

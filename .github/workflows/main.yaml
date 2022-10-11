@@ -48,4 +48,8 @@ jobs:
           whoami
           ls -a
           sudo systemctl start docker
+          docker_login=$(aws ecr get-login --no-include-email)
+          $docker_login
+          docker-compose down
+          docker image rm -f $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker-compose up -d

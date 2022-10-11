@@ -28,4 +28,13 @@ export class UpdateUserDto {
     required: false,
   })
   worktimeCode: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Department',
+    example: 'DEV-SAV',
+    required: false,
+  })
+  department: string;
 }
