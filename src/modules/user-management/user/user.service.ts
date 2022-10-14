@@ -1,18 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { calculateBenefit } from 'src/helpers/calculate-benefit.helper';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { LeaveBenefit } from 'src/modules/benefit-management/leave-benefit/leave-benefit.entity';
 import { LeaveBenefitRepository } from 'src/modules/benefit-management/leave-benefit/leave-benefit.repository';
 import { UserLeaveBenefitRepository } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.repository';
-import { FilterUsersDto, UpdateUserDto } from './dto';
+import { CreateUserDto, FilterUsersDto, UpdateUserDto } from './dto';
 import { UserRepository } from './user.repository';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { UserRoleRepository } from '../user-role/user-role.repository';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
+import { User } from './user.entity';
+import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
 
 @Injectable()
 export class UserService {
   constructor(
+    @InjectEntityManager()
+    private readonly entityManager: EntityManager,
     private readonly userRepository: UserRepository,
     private readonly leaveBenefitRepository: LeaveBenefitRepository,
     private readonly userLeaveBenefitRepository: UserLeaveBenefitRepository,
@@ -112,6 +122,72 @@ export class UserService {
   async getRoles(code: string) {
     return await this.userRoleRepository.find({
       where: { userCode: code },
+    });
+  }
+
+  async create(createUserDto: CreateUserDto) {
+    const {
+      code,
+      email,
+      department,
+      managerCode,
+      worktimeCode,
+      leaveBenefitCode,
+    } = createUserDto;
+
+    const existUser = await this.userRepository.findOne({
+      where: [{ code, email }],
+    });
+
+    if (existUser) {
+      throw new BadRequestException('User code or user mail already exists');
+    }
+
+    const existDepartment = await this.departmentRepository.findOne({
+      where: { code: department },
+    });
+
+    if (!existDepartment) {
+      throw new NotFoundException('Department not found');
+    }
+
+    const existManager = await this.userRepository.findOne({
+      where: { code: managerCode },
+    });
+
+    if (!existManager) {
+      throw new NotFoundException('Manager not found');
+    }
+
+    const existWorktime = await this.genWorktimeStgRepository.findOne({
+      where: { code: worktimeCode },
+    });
+
+    if (!existWorktime) {
+      throw new NotFoundException('Worktime not found');
+    }
+
+    const existBenefit = await this.leaveBenefitRepository.findOne({
+      where: { code: leaveBenefitCode },
+    });
+
+    if (!existBenefit) {
+      throw new NotFoundException('Leave benefits not found');
+    }
+
+    const newUser = this.userRepository.create({
+      ...createUserDto,
+    });
+
+    const userLeaveBenefit = this.userLeaveBenefitRepository.create({
+      remainingDay: calculateBenefit(existBenefit.standardLeave),
+      userCode: code,
+      year: new Date().getUTCFullYear(),
+    });
+
+    await this.entityManager.transaction(async (transaction) => {
+      await transaction.save(User, newUser);
+      await transaction.save(UserLeaveBenefit, userLeaveBenefit);
     });
   }
 }

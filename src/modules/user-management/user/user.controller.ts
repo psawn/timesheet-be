@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
@@ -11,7 +12,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/decorators/auth.decorator';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { Roles } from 'src/decorators/role.decorator';
-import { FilterUsersDto, UpdateUserDto } from './dto';
+import { CreateUserDto, FilterUsersDto, UpdateUserDto } from './dto';
 import { UserService } from './user.service';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
@@ -70,6 +71,18 @@ export class UserController {
   @customDecorators()
   async getRoles(@AuthUser() user: AuthUserDto) {
     const data = await this.userService.getRoles(user.code);
+    return { data };
+  }
+
+  @Post()
+  @Roles(RoleCodeEnum.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: 'Create user successfully.',
+  })
+  @customDecorators()
+  async create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
+    const data = await this.userService.create(createUserDto);
     return { data };
   }
 }

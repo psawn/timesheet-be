@@ -13,7 +13,7 @@ async function bootstrap() {
 
   app.enableCors();
   setupSwagger(app);
-  await app.listen(3000);
+  await app.listen(configService.port);
   logger.log(`Application listening on port ${configService.port}`);
 }
 bootstrap();
