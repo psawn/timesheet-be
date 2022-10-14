@@ -30,4 +30,8 @@ export class LeaveBenefitService {
 
     return await benefit.save();
   }
+
+  async getAll() {
+    return await this.leaveBenefitRepository.find();
+  }
 }

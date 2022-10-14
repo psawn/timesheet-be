@@ -37,6 +37,7 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
         'policy.maxDaysProcess',
         'policy.useAnnualLeave',
         'policy.workDay',
+        'policy.group',
         'createdBy.id',
         'createdBy.code',
         'createdBy.name',

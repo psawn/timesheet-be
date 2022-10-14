@@ -17,6 +17,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { User } from './user.entity';
 import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
+import { hashPassword } from 'src/helpers/encrypt.helper';
 
 @Injectable()
 export class UserService {
@@ -133,6 +134,7 @@ export class UserService {
       managerCode,
       worktimeCode,
       leaveBenefitCode,
+      password,
     } = createUserDto;
 
     const existUser = await this.userRepository.findOne({
@@ -175,14 +177,18 @@ export class UserService {
       throw new NotFoundException('Leave benefits not found');
     }
 
+    const hashPass = await hashPassword(password);
+
     const newUser = this.userRepository.create({
       ...createUserDto,
+      password: hashPass,
     });
 
     const userLeaveBenefit = this.userLeaveBenefitRepository.create({
       remainingDay: calculateBenefit(existBenefit.standardLeave),
       userCode: code,
       year: new Date().getUTCFullYear(),
+      standardLeave: existBenefit.standardLeave,
     });
 
     await this.entityManager.transaction(async (transaction) => {

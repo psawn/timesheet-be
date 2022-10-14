@@ -1,4 +1,4 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
@@ -31,5 +31,17 @@ export class LeaveBenefitController {
       createLeaveBenefitDto,
     );
     return { data: leaveBenefit.code };
+  }
+
+  @Get()
+  @Roles(RoleCodeEnum.ADMIN)
+  @ApiResponse({
+    status: 200,
+    description: 'Create benefit successfully.',
+  })
+  @customDecorators()
+  async getAll() {
+    const data = await this.leaveBenefitService.getAll();
+    return { data };
   }
 }

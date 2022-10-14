@@ -36,6 +36,17 @@ export class PolicyController {
     return { data: result.items, pagination: result.meta };
   }
 
+  @Get('/group')
+  @ApiResponse({
+    status: 200,
+    description: 'Get policies by group successfully.',
+  })
+  @customDecorators()
+  async getByGroup() {
+    const data = await this.policyService.getByGroup();
+    return { data };
+  }
+
   @Get('/:code')
   @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
