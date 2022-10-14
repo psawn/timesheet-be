@@ -187,7 +187,7 @@ export class TimecheckService {
     const filterTimecheckDto: FilterTimecheckDto = {
       startDate,
       endDate,
-      getAll: true,
+      getAll: 'true',
     };
     const totalWorkingDays = await this.getTotalWorkingDays(excelTimecheckDto);
     const { items } = await this.userRepository.getTimechecks(

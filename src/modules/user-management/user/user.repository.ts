@@ -42,6 +42,7 @@ export class UserRepository extends TypeORMRepository<User> {
       'user.phone',
       'user.createdAt',
       'user.updatedAt',
+      'user.code',
       'role.id',
       'role.roleCode',
       'roleInfo.id',

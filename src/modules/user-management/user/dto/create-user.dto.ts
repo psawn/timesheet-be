@@ -67,4 +67,12 @@ export class CreateUserDto {
     example: 'EMP',
   })
   leaveBenefitCode: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    description: 'Name',
+    example: 'Mark',
+  })
+  name: string;
 }

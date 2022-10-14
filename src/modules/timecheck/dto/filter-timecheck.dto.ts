@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PageLimitDto } from 'src/common/dto/page-limit.dto';
 
 export class FilterTimecheckDto extends PageLimitDto {
@@ -18,10 +18,11 @@ export class FilterTimecheckDto extends PageLimitDto {
   endDate: Date;
 
   @IsOptional()
-  @IsBoolean()
+  @IsString()
+  @IsIn(['true', 'false'])
   @ApiProperty({
-    description: 'GEt all',
-    example: false,
+    description: 'Get all',
+    example: 'false',
   })
-  getAll: boolean;
+  getAll: string;
 }

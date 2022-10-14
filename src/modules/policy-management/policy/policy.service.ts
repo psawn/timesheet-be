@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { groupBy } from 'lodash';
 import { getApprover } from 'src/helpers/get-approver.helper';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
@@ -83,11 +82,8 @@ export class PolicyService {
   }
 
   async getByGroup() {
-    const policies = await this.policyRepository.find({
+    return await this.policyRepository.find({
       where: { isActive: true },
     });
-
-    const grouped = groupBy(policies, (item) => item.group);
-    return grouped;
   }
 }

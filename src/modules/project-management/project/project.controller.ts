@@ -48,7 +48,7 @@ export class ProjectController {
   @customDecorators()
   async createProject(
     @AuthUser() user: AuthUserDto,
-    @Query(ValidationPipe) createProjectDto: CreateProjectDto,
+    @Body(ValidationPipe) createProjectDto: CreateProjectDto,
   ) {
     const project = await this.projectService.createProject(
       user,
