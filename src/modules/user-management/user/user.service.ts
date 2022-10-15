@@ -18,6 +18,7 @@ import { EntityManager } from 'typeorm';
 import { User } from './user.entity';
 import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
 import { hashPassword } from 'src/helpers/encrypt.helper';
+import { UserRole } from '../user-role/user-role.entity';
 
 @Injectable()
 export class UserService {
@@ -41,7 +42,7 @@ export class UserService {
   }
 
   async update(user: AuthUserDto, code: string, updateUserDto: UpdateUserDto) {
-    const { leaveBenefitCode, worktimeCode, department } = updateUserDto;
+    const { leaveBenefitCode, worktimeCode, department, role } = updateUserDto;
     const existUser = await this.userRepository.findOne({
       where: { code },
     });
@@ -82,6 +83,16 @@ export class UserService {
       if (!existDepartment) {
         throw new NotFoundException('Department not found');
       }
+    }
+
+    if (role) {
+      const userRole = await this.userRoleRepository.create({
+        userCode: code,
+        roleCode: role,
+      });
+
+      await this.userRoleRepository.delete({ userCode: code });
+      await this.userRoleRepository.save(userRole);
     }
 
     return await this.userRepository.update(data);
@@ -135,6 +146,7 @@ export class UserService {
       worktimeCode,
       leaveBenefitCode,
       password,
+      role,
     } = createUserDto;
 
     const existUser = await this.userRepository.findOne({
@@ -191,9 +203,15 @@ export class UserService {
       standardLeave: existBenefit.standardLeave,
     });
 
+    const userRole = await this.userRoleRepository.create({
+      userCode: code,
+      roleCode: role,
+    });
+
     await this.entityManager.transaction(async (transaction) => {
       await transaction.save(User, newUser);
       await transaction.save(UserLeaveBenefit, userLeaveBenefit);
+      await transaction.save(UserRole, userRole);
     });
   }
 }

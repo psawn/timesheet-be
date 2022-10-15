@@ -7,7 +7,12 @@ import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
-import { UserCodesDto, CreateProjectDto, FilterProjectDto } from './dto';
+import {
+  UserCodesDto,
+  CreateProjectDto,
+  FilterProjectDto,
+  FilterProjectUserDto,
+} from './dto';
 import { ProjectRepository } from './project.repository';
 import * as _ from 'lodash';
 import { In } from 'typeorm';
@@ -147,5 +152,24 @@ export class ProjectService {
     }
 
     await this.projectUserRepository.deleteUsers(code, userCodes);
+  }
+
+  async getMyProjects(user: AuthUserDto, filterProjectDto: FilterProjectDto) {
+    return await this.projectRepository.getMyProjects(
+      user.code,
+      filterProjectDto,
+    );
+  }
+
+  async getUserInProjects(
+    user: AuthUserDto,
+    code: string,
+    filterProjectUserDto: FilterProjectUserDto,
+  ) {
+    return await this.userRepository.getUserInProjects(
+      user.code,
+      code,
+      filterProjectUserDto,
+    );
   }
 }

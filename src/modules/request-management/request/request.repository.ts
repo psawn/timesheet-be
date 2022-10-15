@@ -53,8 +53,6 @@ export class RequestRepository extends TypeORMRepository<TimeRequest> {
         'date.id',
         'date.startDate',
         'date.endDate',
-        'date.startTime',
-        'date.endTime',
         'sender.id',
         'sender.code',
         'sender.name',

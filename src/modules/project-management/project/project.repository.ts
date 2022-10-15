@@ -4,6 +4,7 @@ import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { Department } from 'src/modules/department/department.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { EntityManager, ILike } from 'typeorm';
+import { ProjectUser } from '../project-employee/project-employee.entity';
 import { CreateProjectDto, FilterProjectDto } from './dto';
 import { Project } from './project.entity';
 
@@ -14,8 +15,8 @@ export class ProjectRepository extends TypeORMRepository<Project> {
   }
 
   async getAll(roleCondition: any, filterProjectDto: FilterProjectDto) {
-    const { page, limit, code, name, deparmentCode } = filterProjectDto;
-    const query = Project.createQueryBuilder('project')
+    const { page, limit, code, name, departmentCode } = filterProjectDto;
+    const query = this.createQueryBuilder('project')
       .leftJoinAndMapOne(
         'project.manager',
         User,
@@ -72,8 +73,8 @@ export class ProjectRepository extends TypeORMRepository<Project> {
       query.andWhere({ name: ILike(`%${name}%`) });
     }
 
-    if (deparmentCode) {
-      query.andWhere({ departmentCode: ILike(`%${deparmentCode}%`) });
+    if (departmentCode) {
+      query.andWhere({ departmentCode: ILike(`%${departmentCode}%`) });
     }
 
     return this.paginate({ page, limit }, query);
@@ -90,5 +91,61 @@ export class ProjectRepository extends TypeORMRepository<Project> {
     });
 
     return await project.save();
+  }
+
+  async getMyProjects(userCode: string, filterProjectDto: FilterProjectDto) {
+    const { page, limit, departmentCode, code, name } = filterProjectDto;
+    const offset = (page - 1) * limit;
+
+    const query = this.createQueryBuilder('project')
+      .leftJoinAndMapMany(
+        'project.projectUsers',
+        ProjectUser,
+        'projectUser',
+        'project.code = projectUser.projectCode',
+      )
+      .leftJoinAndMapOne(
+        'project.manager',
+        User,
+        'manager',
+        'project.managerCode = manager.code',
+      )
+      .select([
+        'project.id',
+        'project.code',
+        'project.name',
+        'project.departmentCode',
+        'manager.id',
+        'manager.code',
+        'manager.name',
+      ])
+      .where({ isActive: true })
+      .andWhere('projectUser.userCode = :userCode', { userCode })
+      .take(limit)
+      .skip(offset);
+
+    if (code) {
+      query.andWhere({ code: ILike(`%${code}%`) });
+    }
+
+    if (name) {
+      query.andWhere({ name: ILike(`%${name}%`) });
+    }
+
+    if (departmentCode) {
+      query.andWhere({ departmentCode });
+    }
+
+    const [items, totalItems] = await query.getManyAndCount();
+    return {
+      items,
+      pagination: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: +limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: +page,
+      },
+    };
   }
 }

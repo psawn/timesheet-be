@@ -15,7 +15,12 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
-import { CreateProjectDto, FilterProjectDto, UserCodesDto } from './dto';
+import {
+  CreateProjectDto,
+  FilterProjectDto,
+  FilterProjectUserDto,
+  UserCodesDto,
+} from './dto';
 import { ProjectService } from './project.service';
 
 @Auth()
@@ -39,6 +44,42 @@ export class ProjectController {
     return { data: result.items, pagination: result.meta };
   }
 
+  @Get('/my-project')
+  @ApiResponse({
+    status: 200,
+    description: 'Get my projects successfully.',
+  })
+  @customDecorators()
+  async getMyProjects(
+    @AuthUser() user: AuthUserDto,
+    @Query(ValidationPipe) filterProjectDto: FilterProjectDto,
+  ) {
+    const { items, pagination } = await this.projectService.getMyProjects(
+      user,
+      filterProjectDto,
+    );
+    return { data: items, pagination };
+  }
+
+  @Get('/:code/user')
+  @ApiResponse({
+    status: 200,
+    description: `Get project's user successfully.`,
+  })
+  @customDecorators()
+  async getUserInProjects(
+    @AuthUser() user: AuthUserDto,
+    @Param('code') code: string,
+    @Query(ValidationPipe) filterProjectUserDto: FilterProjectUserDto,
+  ) {
+    const { items, pagination } = await this.projectService.getUserInProjects(
+      user,
+      code,
+      filterProjectUserDto,
+    );
+    return { data: items, pagination };
+  }
+
   @Post()
   @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @ApiResponse({
@@ -58,7 +99,7 @@ export class ProjectController {
   }
 
   @Post('/:code/add-users')
-  @Roles(RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
+  @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @ApiResponse({
     status: 200,
     description: 'Add users to project successfully.',
@@ -74,7 +115,7 @@ export class ProjectController {
   }
 
   @Delete('/:code/delete-users')
-  @Roles(RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
+  @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @ApiResponse({
     status: 200,
     description: 'Delete users to project successfully.',

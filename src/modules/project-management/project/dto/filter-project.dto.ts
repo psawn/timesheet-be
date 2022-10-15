@@ -28,5 +28,5 @@ export class FilterProjectDto extends PageLimitDto {
     example: 'DIV001',
     required: false,
   })
-  deparmentCode: string;
+  departmentCode: string;
 }

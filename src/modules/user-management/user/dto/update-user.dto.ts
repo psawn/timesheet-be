@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { RoleCodeEnum } from 'src/common/constants/role.enum';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -37,4 +38,12 @@ export class UpdateUserDto {
     required: false,
   })
   department: string;
+
+  @IsOptional()
+  @IsEnum(RoleCodeEnum)
+  @ApiProperty({
+    description: 'Role',
+    example: RoleCodeEnum.EMP,
+  })
+  role: string;
 }

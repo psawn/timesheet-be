@@ -9,12 +9,6 @@ export class TimeRequestDate extends AbstractEntity {
   @Column({ name: 'end_date', type: 'date' })
   endDate: Date;
 
-  @Column({ name: 'start_time', type: 'time', nullable: true })
-  startTime: string;
-
-  @Column({ name: 'end_time', type: 'time', nullable: true })
-  endTime: string;
-
   @Column({ name: 'request_id', type: 'uuid', nullable: false })
   requestId: string;
 

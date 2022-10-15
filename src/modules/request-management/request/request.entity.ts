@@ -30,4 +30,7 @@ export class TimeRequest extends AbstractEntity {
 
   @Column({ name: 'timezone', nullable: true })
   timezone: number;
+
+  @Column({ name: 'totalDate', type: 'float4', default: 0 })
+  totalDate: number;
 }

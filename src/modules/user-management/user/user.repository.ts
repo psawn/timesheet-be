@@ -4,6 +4,9 @@ import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
 import { LeaveBenefit } from 'src/modules/benefit-management/leave-benefit/leave-benefit.entity';
 import { Department } from 'src/modules/department/department.entity';
+import { ProjectUser } from 'src/modules/project-management/project-employee/project-employee.entity';
+import { FilterProjectUserDto } from 'src/modules/project-management/project/dto';
+import { Project } from 'src/modules/project-management/project/project.entity';
 import { FilterTimecheckDto } from 'src/modules/timecheck/dto';
 import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
 import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
@@ -249,6 +252,59 @@ export class UserRepository extends TypeORMRepository<User> {
       leaveBenefit: omitLeaveBenefit,
       department: omitDepartment,
       worktimes: omitWorktime,
+    };
+  }
+
+  async getUserInProjects(
+    managerCode: string,
+    projectCode: string,
+    filterProjectUserDto: FilterProjectUserDto,
+  ) {
+    const { page, limit } = filterProjectUserDto;
+    const offset = (page - 1) * limit;
+
+    const query = this.createQueryBuilder('user')
+      .leftJoinAndMapOne(
+        'user.projectUser',
+        ProjectUser,
+        'projectUser',
+        'user.code = projectUser.userCode',
+      )
+      .leftJoinAndMapOne(
+        'projectUser.project',
+        Project,
+        'project',
+        'projectUser.projectCode = project.code',
+      )
+      .where(
+        'project.code = :projectCode AND project.managerCode = :managerCode',
+        {
+          projectCode,
+          managerCode,
+        },
+      )
+      .select([
+        'user.id',
+        'user.code',
+        'user.name',
+        'user.department',
+        'user.isActive',
+        'user.phone',
+        'user.email',
+      ])
+      .take(limit)
+      .skip(offset);
+
+    const [items, totalItems] = await query.getManyAndCount();
+    return {
+      items,
+      pagination: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: +limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: +page,
+      },
     };
   }
 }

@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { get } from 'lodash';
 import * as moment from 'moment';
 import { calculateDiffMin } from 'src/helpers/calculate-diff-minute.helper';
-import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { HolidayBenefitRepository } from '../benefit-management/holiday-benefit/holiday-benefit.repository';
 import { RemoteWorkingRepository } from '../request-management/remote-working/remote-working.repository';
@@ -55,37 +55,15 @@ export class TimecheckService {
       .subtract(checkInDto.timezone, 'hours')
       .format('HH:mm:ss');
 
-    const canRemoteCheckIn = await this.remoteWorkingRepository.count({
+    const existRemoteWorking = await this.remoteWorkingRepository.findOne({
       where: {
-        startDate: LessThanOrEqual(checkDate),
-        endDate: MoreThanOrEqual(checkDate),
+        workDate: checkDate,
         userCode: user.code,
       },
     });
 
-    if (!canRemoteCheckIn) {
+    if (!existRemoteWorking) {
       throw new BadRequestException(`Don't have permission to check in`);
-    }
-
-    const worktime = await this.userRepository.getUserWorktime(
-      user.code,
-      checkDate,
-    );
-
-    const worktimCheckIn = get(
-      worktime,
-      'worktimeStg.worktime.checkInTime',
-      null,
-    );
-    const worktimeCheckOut = get(
-      worktime,
-      'worktimeStg.worktime.checkOutTime',
-      null,
-    );
-    const isDayOff = get(worktime, 'worktimeStg.worktime.isDayOff', false);
-
-    if (!worktimCheckIn || !worktimeCheckOut) {
-      throw new NotFoundException('Worktime not found');
     }
 
     return await this.entityManager.transaction(async (transaction) => {
@@ -96,7 +74,7 @@ export class TimecheckService {
       if (existTimecheck) {
         if (existTimecheck.checkInTime) {
           const diffChecktimeInMin = calculateDiffMin(
-            worktimeCheckOut,
+            existRemoteWorking.checkOutTime,
             checktime,
           );
           const worktime =
@@ -106,28 +84,24 @@ export class TimecheckService {
           existTimecheck.missCheckOutMin = diffChecktimeInMin;
           existTimecheck.missCheckOut = diffChecktimeInMin > 0 ? true : false;
           existTimecheck.workHour = +worktime.toFixed(1);
-        } else {
-          const diffChecktimeInMin = calculateDiffMin(
-            checktime,
-            worktimCheckIn,
-          );
 
-          existTimecheck.checkInTime = checktime;
-          existTimecheck.missCheckInMin = diffChecktimeInMin;
-          existTimecheck.missCheckIn = diffChecktimeInMin > 0 ? true : false;
+          return await transaction.save(Timecheck, existTimecheck);
         }
-
-        existTimecheck.timezone = checkInDto.timezone;
-        existTimecheck.isDayOff = isDayOff;
-        return await transaction.save(Timecheck, existTimecheck);
       } else {
+        const diffChecktimeInMin = calculateDiffMin(
+          checktime,
+          existRemoteWorking.checkInTime,
+        );
+
         const timecheck = transaction.create(Timecheck, {
           userCode: user.code,
           username: user.name,
           timezone: checkInDto.timezone,
           checkDate,
           checkInTime: checktime,
-          isDayOff,
+          isDayOff: existRemoteWorking.isDayOff,
+          missCheckInMin: diffChecktimeInMin,
+          missCheckIn: diffChecktimeInMin > 0 ? true : false,
         });
 
         return await transaction.save(Timecheck, timecheck);

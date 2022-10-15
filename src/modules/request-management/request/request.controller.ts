@@ -22,7 +22,6 @@ import {
   FilterRequestsDto,
 } from './dto';
 import { RequestService } from './request.service';
-
 @Auth()
 @ApiTags('Request')
 @Controller('requests')
@@ -71,6 +70,23 @@ export class RequestController {
     @Query() filterRequestsDto: FilterRequestsDto,
   ) {
     const { items, pagination } = await this.requestService.getAllMyRequests(
+      user,
+      filterRequestsDto,
+    );
+    return { data: items, pagination };
+  }
+
+  @Get('/approver')
+  @ApiResponse({
+    status: 200,
+    description: 'Get request to approver successfully.',
+  })
+  @customDecorators()
+  async getAllToApprover(
+    @AuthUser() user: AuthUserDto,
+    @Query() filterRequestsDto: FilterRequestsDto,
+  ) {
+    const { items, pagination } = await this.requestService.getAllToApprover(
       user,
       filterRequestsDto,
     );
