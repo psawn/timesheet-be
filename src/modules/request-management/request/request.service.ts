@@ -17,6 +17,7 @@ import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
+import { MailService } from 'src/shared/services/mail.service';
 import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { RemoteWorking } from '../remote-working/remote-working.entity';
 import { RequestDateDto } from '../request-date/dto/request-date.dto';
@@ -39,6 +40,7 @@ export class RequestService {
     private readonly holidayBenefitRepository: HolidayBenefitRepository,
     @InjectEntityManager()
     private readonly entityManager: EntityManager,
+    private readonly mailService: MailService,
   ) {}
 
   async createRequest(user: AuthUserDto, createRequestDto: CreateRequestDto) {
@@ -162,6 +164,16 @@ export class RequestService {
       );
 
       await transaction.save(RequestWorkingDate, savedWorkingDates);
+
+      const config = {
+        from: '"👻" <huynvth2001006@fpt.edu.vn>',
+        to: approver.email,
+        subject: 'Notification ✔',
+        text: 'Timesheet notification',
+        html: '<b>One request have been to send to you. Please check it.</b>',
+      };
+
+      await this.mailService.sendMail(config);
 
       return request;
     });

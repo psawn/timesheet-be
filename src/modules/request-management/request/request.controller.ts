@@ -22,6 +22,8 @@ import {
   FilterRequestsDto,
 } from './dto';
 import { RequestService } from './request.service';
+import * as nodemailer from 'nodemailer';
+
 @Auth()
 @ApiTags('Request')
 @Controller('requests')
@@ -135,4 +137,28 @@ export class RequestController {
     );
     return { date: request };
   }
+
+  // @Get('/test/email')
+  // async testEmail() {
+  //   const transporter = nodemailer.createTransport({
+  //     host: 'smtp.gmail.com',
+  //     port: 587,
+  //     secure: false,
+  //     auth: {
+  //       user: 'huynvth2001006@fpt.edu.vn',
+  //       pass: '100224081004mis',
+  //     },
+  //     tls: {
+  //       rejectUnauthorized: false,
+  //     },
+  //   });
+
+  //   await transporter.sendMail({
+  //     from: '"Fred Foo 👻" <huynvth2001006@fpt.edu.vn>', // sender address
+  //     to: 'bao.doan@savvycomsoftware.com', // list of receivers
+  //     subject: 'Hello ✔', // Subject line
+  //     text: 'Hello world?', // plain text body
+  //     html: '<b>Hello world?</b>', // html body
+  //   });
+  // }
 }
