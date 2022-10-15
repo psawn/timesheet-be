@@ -19,6 +19,7 @@ import { User } from './user.entity';
 import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
 import { hashPassword } from 'src/helpers/encrypt.helper';
 import { UserRole } from '../user-role/user-role.entity';
+import { S3Service } from 'src/shared/services/aws.service';
 
 @Injectable()
 export class UserService {
@@ -31,6 +32,7 @@ export class UserService {
     private readonly genWorktimeStgRepository: GenWorktimeStgRepository,
     private readonly departmentRepository: DepartmentRepository,
     private readonly userRoleRepository: UserRoleRepository,
+    private readonly s3Service: S3Service,
   ) {}
 
   async getAll(filterUsersDto: FilterUsersDto) {
@@ -95,7 +97,7 @@ export class UserService {
       await this.userRoleRepository.save(userRole);
     }
 
-    return await this.userRepository.update(data);
+    return await this.userRepository.updateData(data);
   }
 
   async updateUserBenefit(userCode: string, benefit: LeaveBenefit) {
@@ -213,5 +215,15 @@ export class UserService {
       await transaction.save(UserLeaveBenefit, userLeaveBenefit);
       await transaction.save(UserRole, userRole);
     });
+  }
+
+  async uploadAvatar(user: AuthUserDto, file: Express.Multer.File) {
+    const avatar = await this.s3Service.singleUploadToS3(file);
+    const existUser = await this.userRepository.update(
+      { code: user.code },
+      { avatar },
+    );
+
+    return existUser;
   }
 }

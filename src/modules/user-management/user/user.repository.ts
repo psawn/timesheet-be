@@ -79,7 +79,7 @@ export class UserRepository extends TypeORMRepository<User> {
     return await User.findOne(conditions);
   }
 
-  async update(data: any) {
+  async updateData(data: any) {
     return await User.save(data);
   }
 

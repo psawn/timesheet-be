@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/decorators/auth.decorator';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { Roles } from 'src/decorators/role.decorator';
@@ -17,6 +19,7 @@ import { UserService } from './user.service';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { AuthUser } from 'src/decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Auth()
 @ApiTags('User')
@@ -83,6 +86,33 @@ export class UserController {
   @customDecorators()
   async create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
     const data = await this.userService.create(createUserDto);
+    return { data };
+  }
+
+  @Post('/upload-avatar')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiResponse({
+    status: 200,
+    description: 'Upload user avatar successfully.',
+  })
+  @customDecorators()
+  async uploadAvatar(
+    @AuthUser() user: AuthUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const data = await this.userService.uploadAvatar(user, file);
     return { data };
   }
 }

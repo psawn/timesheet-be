@@ -49,6 +49,9 @@ export class User extends AbstractEntity {
   @Column({ name: 'worktime_code', nullable: true })
   worktimeCode: string;
 
+  @Column({ name: 'avatar', nullable: true })
+  avatar: string;
+
   async validatePassword(password: string): Promise<boolean> {
     const hashPassword = await bcrypt.compare(password, this.password);
     return hashPassword;

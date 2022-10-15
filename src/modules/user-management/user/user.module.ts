@@ -4,6 +4,7 @@ import { LeaveBenefitRepository } from 'src/modules/benefit-management/leave-ben
 import { UserLeaveBenefitRepository } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.repository';
 import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
+import { SharedModule } from 'src/shared/shared.module';
 import { UserRoleRepository } from '../user-role/user-role.repository';
 import { UserController } from './user.controller';
 import { User } from './user.entity';
@@ -11,7 +12,7 @@ import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [TypeOrmModule.forFeature([User]), SharedModule],
   controllers: [UserController],
   providers: [
     UserRepository,
