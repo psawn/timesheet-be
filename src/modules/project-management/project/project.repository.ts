@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { Department } from 'src/modules/department/department.entity';
@@ -94,7 +95,11 @@ export class ProjectRepository extends TypeORMRepository<Project> {
   }
 
   async getMyProjects(userCode: string, filterProjectDto: FilterProjectDto) {
-    const { page, limit, departmentCode, code, name } = filterProjectDto;
+    const { departmentCode, code, name } = filterProjectDto;
+    const page = filterProjectDto.page || PaginationConstants.DEFAULT_PAGE;
+    const limit =
+      filterProjectDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
+
     const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('project')

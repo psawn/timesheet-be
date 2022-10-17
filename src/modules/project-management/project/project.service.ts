@@ -110,11 +110,19 @@ export class ProjectService {
     const { userCodes } = userCodesDto;
 
     const existProject = await this.projectRepository.findOneByConditions({
-      where: { managerCode: user.code, code },
+      where: { code },
     });
 
     if (!existProject) {
       throw new NotFoundException('Project not found');
+    }
+
+    if (!user.roles.includes(RoleCodeEnum.ADMIN)) {
+      if (existProject.managerCode != user.code) {
+        throw new BadRequestException(
+          `User don's have permission or isn't project's manager`,
+        );
+      }
     }
 
     const countUser = await this.userRepository.count({
@@ -144,11 +152,19 @@ export class ProjectService {
     const { userCodes } = userCodesDto;
 
     const existProject = await this.projectRepository.findOneByConditions({
-      where: { managerCode: user.code, code },
+      where: { code },
     });
 
     if (!existProject) {
       throw new NotFoundException('Project not found');
+    }
+
+    if (!user.roles.includes(RoleCodeEnum.ADMIN)) {
+      if (existProject.managerCode != user.code) {
+        throw new BadRequestException(
+          `User don's have permission or isn't project's manager`,
+        );
+      }
     }
 
     await this.projectUserRepository.deleteUsers(code, userCodes);

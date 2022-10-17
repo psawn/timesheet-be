@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { Policy } from 'src/modules/policy-management/policy/policy.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
@@ -14,7 +15,10 @@ export class RequestRepository extends TypeORMRepository<TimeRequest> {
   }
 
   async getAll(filterRequestsDto: FilterRequestsDto, conditions?: any) {
-    const { page, limit, policyCode, status } = filterRequestsDto;
+    const { policyCode, status } = filterRequestsDto;
+    const page = filterRequestsDto.page || PaginationConstants.DEFAULT_PAGE;
+    const limit =
+      filterRequestsDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
     const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('request')

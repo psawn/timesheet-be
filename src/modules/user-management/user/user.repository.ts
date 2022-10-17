@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { get, omit, pick } from 'lodash';
+import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
 import { LeaveBenefit } from 'src/modules/benefit-management/leave-benefit/leave-benefit.entity';
@@ -24,7 +25,11 @@ export class UserRepository extends TypeORMRepository<User> {
   }
 
   async getAll(filterUsersDto: FilterUsersDto) {
-    const { page, limit, email } = filterUsersDto;
+    const { email } = filterUsersDto;
+    const page = filterUsersDto.page || PaginationConstants.DEFAULT_PAGE;
+    const limit =
+      filterUsersDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
+
     const query = this.createQueryBuilder('user')
       .leftJoinAndMapMany(
         'user.roles',
@@ -115,7 +120,10 @@ export class UserRepository extends TypeORMRepository<User> {
     filterTimecheckDto: FilterTimecheckDto,
     conditions?: any,
   ) {
-    const { page, limit, startDate, endDate, getAll } = filterTimecheckDto;
+    const { startDate, endDate, getAll } = filterTimecheckDto;
+    const page = filterTimecheckDto.page || PaginationConstants.DEFAULT_PAGE;
+    const limit =
+      filterTimecheckDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
     const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('user')
@@ -260,7 +268,9 @@ export class UserRepository extends TypeORMRepository<User> {
     projectCode: string,
     filterProjectUserDto: FilterProjectUserDto,
   ) {
-    const { page, limit } = filterProjectUserDto;
+    const page = filterProjectUserDto.page || PaginationConstants.DEFAULT_PAGE;
+    const limit =
+      filterProjectUserDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
     const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('user')
