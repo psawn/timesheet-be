@@ -18,12 +18,12 @@ import { CheckInDto, ExcelTimecheckDto, FilterTimecheckDto } from './dto';
 import { TimecheckService } from './timecheck.service';
 import { Response } from 'express';
 
-@Auth()
 @ApiTags('Timecheck')
 @Controller('timecheks')
 export class TimecheckController {
   constructor(private readonly timecheckSerive: TimecheckService) {}
 
+  @Auth()
   @Get()
   @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
@@ -38,6 +38,7 @@ export class TimecheckController {
     return { data: items, pagination: pagination };
   }
 
+  @Auth()
   @Get('/my-timecheck')
   @ApiResponse({
     status: 200,
@@ -55,6 +56,7 @@ export class TimecheckController {
     return { data: items, pagination: pagination };
   }
 
+  @Auth()
   @Post('/check-in')
   @ApiResponse({
     status: 200,

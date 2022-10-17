@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
@@ -114,7 +113,7 @@ export class ProjectController {
     return { data: null };
   }
 
-  @Delete('/:code/delete-users')
+  @Post('/:code/delete-users')
   @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @ApiResponse({
     status: 200,
