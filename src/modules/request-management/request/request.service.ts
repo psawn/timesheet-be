@@ -165,15 +165,15 @@ export class RequestService {
 
       await transaction.save(RequestWorkingDate, savedWorkingDates);
 
-      // const config = {
-      //   from: '"👻" <huynvth2001006@fpt.edu.vn>',
-      //   to: approver.email,
-      //   subject: 'Notification ✔',
-      //   text: 'Timesheet notification',
-      //   html: '<b>One request have been to send to you. Please check it.</b>',
-      // };
+      const config = {
+        from: '"📧 Timesheet notification" <huynvth2001006@fpt.edu.vn>',
+        to: approver.email,
+        subject: 'One request have been assigned to you',
+        text: 'Timesheet notification',
+        html: '<b>One request have been to assigned to you. Please check it.</b>',
+      };
 
-      // await this.mailService.sendMail(config);
+      await this.mailService.sendMail(config);
 
       return request;
     });
