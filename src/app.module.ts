@@ -14,6 +14,7 @@ import { GenWorktimeStgModule } from './modules/worktime-management/general-work
 import { SharedModule } from './shared/shared.module';
 import { CronModule } from './cron/cron.module';
 import { TimecheckModule } from './modules/timecheck/timecheck.module';
+import { TimelogModule } from './modules/timelog/timelog.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { TimecheckModule } from './modules/timecheck/timecheck.module';
     LeaveBenefitModule,
     CronModule,
     TimecheckModule,
+    TimelogModule,
   ],
   controllers: [],
   providers: [],

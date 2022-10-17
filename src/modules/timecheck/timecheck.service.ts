@@ -251,7 +251,7 @@ export class TimecheckService {
           }
         }
 
-        workingHours += worktime;
+        workingHours += +worktime;
         objRow[`${new Date(timecheck.checkDate).getDate()}`] = worktime;
       });
       objRow['workingDays'] = workingHours / +process.env.DEFAULT_WORK_HOUR;
