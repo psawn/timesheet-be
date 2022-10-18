@@ -1,6 +1,7 @@
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { PaginationConstants } from 'src/common/constants/pagination.enum';
-import { Repository } from 'typeorm';
+import { PageLimitDto } from 'src/common/dto/page-limit.dto';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
 export class TypeORMRepository<T> extends Repository<T> {
   // only work with one to one relation
@@ -15,5 +16,35 @@ export class TypeORMRepository<T> extends Repository<T> {
     }
 
     return null;
+  }
+
+  async customPaginate(options: PageLimitDto, query: SelectQueryBuilder<T>) {
+    const page = options.page || PaginationConstants.DEFAULT_PAGE;
+    const limit = options.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
+    const [items, totalItems] = await query.getManyAndCount();
+
+    return {
+      items,
+      pagination: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: +limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: +page,
+      },
+    };
+  }
+
+  async customeUpsert(conditions: any, properties: any) {
+    const entity = await this.findOne({
+      where: conditions,
+    });
+
+    if (entity) {
+      return this.update(conditions, properties);
+    }
+
+    const newEntity = this.create(properties);
+    return this.save(newEntity);
   }
 }

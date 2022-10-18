@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { get, omit, pick } from 'lodash';
+import { get, groupBy, omit, pick } from 'lodash';
 import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
 import { LeaveBenefit } from 'src/modules/benefit-management/leave-benefit/leave-benefit.entity';
 import { Department } from 'src/modules/department/department.entity';
-import { ProjectUser } from 'src/modules/project-management/project-employee/project-employee.entity';
+import { ProjectUser } from 'src/modules/project-management/project-user/project-user.entity';
 import { FilterProjectUserDto } from 'src/modules/project-management/project/dto';
 import { Project } from 'src/modules/project-management/project/project.entity';
 import { FilterTimecheckDto } from 'src/modules/timecheck/dto';
 import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
+import {
+  FilterMyTimelogsDto,
+  FilterTimelogsDto,
+} from 'src/modules/timelog/dto';
+import { Timelog } from 'src/modules/timelog/timelog.entity';
 import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
 import { EntityManager } from 'typeorm';
@@ -316,5 +321,71 @@ export class UserRepository extends TypeORMRepository<User> {
         currentPage: +page,
       },
     };
+  }
+
+  async getAllTimelogs(filterTimelogsDto: FilterTimelogsDto) {
+    const {
+      page,
+      limit,
+      startDate,
+      endDate,
+      departmentCode,
+      projectCode,
+      userCode,
+    } = filterTimelogsDto;
+
+    const query = this.createQueryBuilder('user')
+      .leftJoinAndMapMany(
+        'user.timelogs',
+        Timelog,
+        'timelog',
+        'user.code = timelog.userCode AND timelog.checkDate >= :startDate AND timelog.checkDate <= :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .select([
+        'user.id',
+        'user.code',
+        'user.name',
+        'user.department',
+        'timelog.id',
+        'timelog.projectCode',
+        'timelog.logHour',
+        'timelog.checkDate',
+        'timelog.description',
+      ]);
+
+    if (departmentCode) {
+      query.andWhere({ department: departmentCode });
+    }
+
+    if (projectCode) {
+      query.andWhere('timelog.projectCode = :projectCode', { projectCode });
+    }
+
+    if (userCode) {
+      query.andWhere({ code: userCode });
+    }
+
+    const { items } = await this.customPaginate({ page, limit }, query);
+
+    const summary = items.map((item) => {
+      const timelogs = get(item, 'timelogs', []);
+      const grouped = groupBy(timelogs, (timelogs) => timelogs.checkDate);
+
+      const sumTimelogs = [];
+      for (const property in grouped) {
+        let sum = 0;
+        // console.log(property);
+        // console.log(grouped[property]);
+        grouped[property].map((item) => (sum += item.logHour));
+        console.log('sum', sum);
+        console.log('-----------------');
+      }
+    });
+
+    return items;
   }
 }

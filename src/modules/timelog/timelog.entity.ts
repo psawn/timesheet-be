@@ -9,7 +9,7 @@ export class Timelog extends AbstractEntity {
   @Column({ name: 'project_code', nullable: false })
   projectCode: string;
 
-  @Column({ name: 'logHour', type: 'float4', default: 0 })
+  @Column({ name: 'log_hour', type: 'float4', default: 0 })
   logHour: number;
 
   @Column({ name: 'description', nullable: true })

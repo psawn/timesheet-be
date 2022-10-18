@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { EntityManager, In } from 'typeorm';
-import { ProjectUser } from './project-employee.entity';
+import { Project } from '../project/project.entity';
+import { ProjectUser } from './project-user.entity';
 
 @Injectable()
 export class ProjectUserRepository extends TypeORMRepository<ProjectUser> {
@@ -27,5 +28,23 @@ export class ProjectUserRepository extends TypeORMRepository<ProjectUser> {
       { projectCode, userCode: In(userCodes) },
       { isActive: false },
     );
+  }
+
+  async findUserInProject(projectCode: string, userCode: string) {
+    const query = this.createQueryBuilder('mapping')
+      .leftJoinAndMapOne(
+        'mapping.project',
+        Project,
+        'project',
+        'mapping.projectCode = project.code',
+      )
+      .where({
+        isActive: true,
+        userCode,
+        projectCode,
+      })
+      .andWhere('project.isActive = true');
+
+    return query.getOne();
   }
 }

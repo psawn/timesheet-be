@@ -16,7 +16,7 @@ import {
 import { ProjectRepository } from './project.repository';
 import * as _ from 'lodash';
 import { In } from 'typeorm';
-import { ProjectUserRepository } from '../project-employee/project-employee.repository';
+import { ProjectUserRepository } from '../project-user/project-user.repository';
 
 @Injectable()
 export class ProjectService {
