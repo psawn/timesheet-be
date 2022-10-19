@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PageLimitDto } from 'src/common/dto/page-limit.dto';
 
-export class FilterMyTimelogsDto extends PageLimitDto {
+export class FilterDetailTimelogsDto extends PageLimitDto {
   @IsOptional()
   @IsString()
   @ApiProperty({

@@ -3,7 +3,7 @@ import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { Department } from 'src/modules/department/department.entity';
-import { FilterMyTimelogsDto } from 'src/modules/timelog/dto';
+import { FilterDetailTimelogsDto } from 'src/modules/timelog/dto';
 import { Timelog } from 'src/modules/timelog/timelog.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { EntityManager, ILike } from 'typeorm';
@@ -156,12 +156,12 @@ export class ProjectRepository extends TypeORMRepository<Project> {
     };
   }
 
-  async getDetaliMyTimelogs(
+  async getDetailTimelogs(
     userCode: string,
-    filterMyTimelogsDto: FilterMyTimelogsDto,
+    filterDetailTimelogsDto: FilterDetailTimelogsDto,
   ) {
     const { page, limit, projectCode, startDate, endDate } =
-      filterMyTimelogsDto;
+      filterDetailTimelogsDto;
 
     const query = this.createQueryBuilder('project')
       .leftJoinAndMapMany(

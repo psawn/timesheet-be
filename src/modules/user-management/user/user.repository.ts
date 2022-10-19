@@ -10,10 +10,7 @@ import { FilterProjectUserDto } from 'src/modules/project-management/project/dto
 import { Project } from 'src/modules/project-management/project/project.entity';
 import { FilterTimecheckDto } from 'src/modules/timecheck/dto';
 import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
-import {
-  FilterMyTimelogsDto,
-  FilterTimelogsDto,
-} from 'src/modules/timelog/dto';
+import { FilterTimelogsDto } from 'src/modules/timelog/dto';
 import { Timelog } from 'src/modules/timelog/timelog.entity';
 import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
@@ -310,20 +307,14 @@ export class UserRepository extends TypeORMRepository<User> {
       .take(limit)
       .skip(offset);
 
-    const [items, totalItems] = await query.getManyAndCount();
-    return {
-      items,
-      pagination: {
-        totalItems,
-        itemCount: items.length,
-        itemsPerPage: +limit,
-        totalPages: Math.ceil(totalItems / limit),
-        currentPage: +page,
-      },
-    };
+    return await this.customPaginate({ page, limit }, query);
   }
 
-  async getAllTimelogs(filterTimelogsDto: FilterTimelogsDto) {
+  async getAllTimelogs(
+    roleCondition: any,
+    filterTimelogsDto: FilterTimelogsDto,
+  ) {
+    console.log('roleCondition', roleCondition);
     const {
       page,
       limit,
@@ -335,6 +326,12 @@ export class UserRepository extends TypeORMRepository<User> {
     } = filterTimelogsDto;
 
     const query = this.createQueryBuilder('user')
+      // .leftJoinAndMapOne(
+      //   'user,department',
+      //   Department,
+      //   'department',
+      //   'user.department = department.code',
+      // )
       .leftJoinAndMapMany(
         'user.timelogs',
         Timelog,
@@ -357,6 +354,10 @@ export class UserRepository extends TypeORMRepository<User> {
         'timelog.description',
       ]);
 
+    if (roleCondition) {
+      query.andWhere(roleCondition.condtions, roleCondition.params);
+    }
+
     if (departmentCode) {
       query.andWhere({ department: departmentCode });
     }
@@ -374,18 +375,37 @@ export class UserRepository extends TypeORMRepository<User> {
     const summary = items.map((item) => {
       const timelogs = get(item, 'timelogs', []);
       const grouped = groupBy(timelogs, (timelogs) => timelogs.checkDate);
-
       const sumTimelogs = [];
+
       for (const property in grouped) {
         let sum = 0;
-        // console.log(property);
-        // console.log(grouped[property]);
         grouped[property].map((item) => (sum += item.logHour));
-        console.log('sum', sum);
-        console.log('-----------------');
+        sumTimelogs.push({
+          property,
+          totalHour: sum,
+        });
       }
+
+      return {
+        ...omit(item, ['timelogs']),
+        timelogs: sumTimelogs,
+      };
     });
 
-    return items;
+    return summary;
+  }
+
+  async ckTimelogDerMng(code: string, managerCode: string) {
+    const query = this.createQueryBuilder('user')
+      .leftJoinAndMapOne(
+        'user.department',
+        Department,
+        'department',
+        'user.department = department.code',
+      )
+      .where({ code })
+      .andWhere('department.managerCode = :managerCode', { managerCode });
+
+    return await query.getOne();
   }
 }

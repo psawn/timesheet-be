@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DepartmentRepository } from '../department/department.repository';
 import { ProjectUserRepository } from '../project-management/project-user/project-user.repository';
 import { ProjectRepository } from '../project-management/project/project.repository';
 import { UserRepository } from '../user-management/user/user.repository';
@@ -17,6 +18,7 @@ import { TimelogService } from './timelog.service';
     UserRepository,
     ProjectUserRepository,
     ProjectRepository,
+    DepartmentRepository,
   ],
   exports: [],
 })

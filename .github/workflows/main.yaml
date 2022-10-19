@@ -32,24 +32,24 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         
-    - name: Execute SSH commmands on remote server
-      id: ec2-command
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: timesheet-ft
-        IMAGE_TAG: latest
-      uses: JimCronqvist/action-ssh@master
-      with:
-        hosts: 'ec2-user@ec2-18-181-220-91.ap-northeast-1.compute.amazonaws.com'
-        privateKey: ${{ secrets.EC2_SSH_KEY }}
-        debug: false
-        command: |
-          hostname -a
-          whoami
-          ls -a
-          sudo systemctl start docker
-          docker_login=$(aws ecr get-login --no-include-email)
-          $docker_login
-          docker-compose down
-          docker image rm -f $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker-compose up -d
+    # - name: Execute SSH commmands on remote server
+    #   id: ec2-command
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     ECR_REPOSITORY: timesheet-ft
+    #     IMAGE_TAG: latest
+    #   uses: JimCronqvist/action-ssh@master
+    #   with:
+    #     hosts: 'ec2-user@ec2-18-181-220-91.ap-northeast-1.compute.amazonaws.com'
+    #     privateKey: ${{ secrets.EC2_SSH_KEY }}
+    #     debug: false
+    #     command: |
+    #       hostname -a
+    #       whoami
+    #       ls -a
+    #       sudo systemctl start docker
+    #       docker_login=$(aws ecr get-login --no-include-email)
+    #       $docker_login
+    #       docker-compose down
+    #       docker image rm -f $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    #       docker-compose up -d

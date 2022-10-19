@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { FilterMyTimelogsDto } from './filter-my-timelogs.dto';
+import { FilterDetailTimelogsDto } from './filter-my-timelogs.dto';
 
-export class FilterTimelogsDto extends FilterMyTimelogsDto {
+export class FilterTimelogsDto extends FilterDetailTimelogsDto {
   @IsOptional()
   @IsString()
   @ApiProperty({

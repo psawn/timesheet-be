@@ -3,20 +3,23 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { Auth } from 'src/decorators/auth.decorator';
+import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import {
   CreateTimelogDto,
   DeleteTimelogDto,
   FilterTimelogsDto,
-  FilterMyTimelogsDto,
+  FilterDetailTimelogsDto,
 } from './dto';
 import { TimelogService } from './timelog.service';
 
@@ -26,14 +29,18 @@ import { TimelogService } from './timelog.service';
 export class TimelogController {
   constructor(private readonly timelogService: TimelogService) {}
 
+  @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @Get()
   @ApiResponse({
     status: 200,
     description: 'Get all timelogs successfully.',
   })
   @customDecorators()
-  async getAll(@Query() filterTimelogsDto: FilterTimelogsDto) {
-    const data = await this.timelogService.getAll(filterTimelogsDto);
+  async getAll(
+    @AuthUser() user: AuthUserDto,
+    @Query() filterTimelogsDto: FilterTimelogsDto,
+  ) {
+    const data = await this.timelogService.getAll(user, filterTimelogsDto);
     return { data };
   }
 
@@ -71,13 +78,33 @@ export class TimelogController {
     description: 'Get my timelogs successfully.',
   })
   @customDecorators()
-  async getDetaliMyTimelogs(
+  async getMyTimelogs(
     @AuthUser() user: AuthUserDto,
-    @Query() filterMyTimelogsDto: FilterMyTimelogsDto,
+    @Query() filterDetailTimelogsDto: FilterDetailTimelogsDto,
   ) {
-    const data = await this.timelogService.getDetaliMyTimelogs(
+    const data = await this.timelogService.getMyTimelogs(
+      user.code,
+      filterDetailTimelogsDto,
+    );
+    return { data };
+  }
+
+  @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
+  @Get('/:userCode')
+  @ApiResponse({
+    status: 200,
+    description: 'Get user timelogs successfully.',
+  })
+  @customDecorators()
+  async getUserTimelogs(
+    @AuthUser() user: AuthUserDto,
+    @Param('userCode') userCode: string,
+    @Query() filterDetailTimelogsDto: FilterDetailTimelogsDto,
+  ) {
+    const data = await this.timelogService.getDetaliTimelogs(
+      userCode,
+      filterDetailTimelogsDto,
       user,
-      filterMyTimelogsDto,
     );
     return { data };
   }

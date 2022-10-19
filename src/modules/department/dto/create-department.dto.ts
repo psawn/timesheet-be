@@ -13,7 +13,7 @@ export class CreateDepartmentDto {
 
   @IsNotEmpty()
   @IsString()
-  @Transform(({ key: value }) => value.toUpperCase())
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Code',
     example: 'DEV001',
