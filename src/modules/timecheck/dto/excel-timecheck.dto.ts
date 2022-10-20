@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsDate, IsNotEmpty } from 'class-validator';
 
 export class ExcelTimecheckDto {
   @IsNotEmpty()
@@ -10,6 +10,7 @@ export class ExcelTimecheckDto {
   worktimeCode: string;
 
   @IsNotEmpty()
+  @IsDate()
   @ApiProperty({
     description: 'Start date',
     example: '2022-10-01',
@@ -17,6 +18,7 @@ export class ExcelTimecheckDto {
   startDate: Date;
 
   @IsNotEmpty()
+  @IsDate()
   @ApiProperty({
     description: 'End date',
     example: '2022-10-01',

@@ -15,6 +15,7 @@ import { SharedModule } from './shared/shared.module';
 import { CronModule } from './cron/cron.module';
 import { TimecheckModule } from './modules/timecheck/timecheck.module';
 import { TimelogModule } from './modules/timelog/timelog.module';
+import { OtManagerModule } from './modules/ot-management/ot-manager.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { TimelogModule } from './modules/timelog/timelog.module';
     CronModule,
     TimecheckModule,
     TimelogModule,
+    OtManagerModule,
   ],
   controllers: [],
   providers: [],

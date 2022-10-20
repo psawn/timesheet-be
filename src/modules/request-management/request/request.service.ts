@@ -22,7 +22,7 @@ import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { RemoteWorking } from '../remote-working/remote-working.entity';
 import { RequestDateDto } from '../request-date/dto/request-date.dto';
 import { TimeRequestDate } from '../request-date/request-date.entity';
-import { RequestWorkingDate } from '../request-working-dates/request-working-date.entity';
+import { RequestWorkingDate } from '../request-working-date/request-working-date.entity';
 import {
   ChangeRequestStatus,
   CreateRequestDto,
