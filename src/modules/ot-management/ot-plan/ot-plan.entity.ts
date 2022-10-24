@@ -10,6 +10,12 @@ export class OtPlan extends AbstractEntity {
   @Column({ name: 'project_code', nullable: false })
   projectCode: string;
 
+  @Column({ name: 'ot_policy_code', nullable: false })
+  otPolicyCode: string;
+
+  @Column({ name: 'config_ot_policy', type: 'jsonb', nullable: true })
+  configOtPolicy: string;
+
   @Column({ name: 'start_date', type: 'date' })
   startDate: Date;
 
@@ -24,7 +30,4 @@ export class OtPlan extends AbstractEntity {
 
   @Column({ name: 'status', default: StatusRequestEnum.WAITING })
   status: string;
-
-  @Column({ name: 'is_active', default: true })
-  isActive: boolean;
 }

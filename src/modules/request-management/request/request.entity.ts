@@ -16,14 +16,11 @@ export class TimeRequest extends AbstractEntity {
   @Column({ name: 'policy_code', nullable: true })
   policyCode: string;
 
-  @Column({ name: 'configPolicy', type: 'jsonb', nullable: true })
+  @Column({ name: 'config_policy', type: 'jsonb', nullable: true })
   configPolicy: string;
 
-  @Column({ name: 'expireTime', nullable: true, type: 'timestamp' })
+  @Column({ name: 'expire_time', nullable: true, type: 'timestamp' })
   expireTime: Date;
-
-  @Column({ name: 'approver_code', nullable: true })
-  approverCode: string;
 
   @Column({ name: 'policy_type', nullable: true })
   policyType: string;
@@ -31,6 +28,6 @@ export class TimeRequest extends AbstractEntity {
   @Column({ name: 'timezone', nullable: true })
   timezone: number;
 
-  @Column({ name: 'totalDate', type: 'float4', default: 0 })
+  @Column({ name: 'total_date', type: 'float4', default: 0 })
   totalDate: number;
 }

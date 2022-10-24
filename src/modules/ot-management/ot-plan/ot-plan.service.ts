@@ -3,9 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { omit } from 'lodash';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { ProjectRepository } from 'src/modules/project-management/project/project.repository';
+import { OtPolicyRepository } from '../ot-policy/ot-policy.repository';
 import { CreateOtPlan, FilterOtPlanDto, UpdateOtPlanDto } from './dto';
 import { OtPlanRepository } from './ot-plan.repository';
 
@@ -14,6 +16,7 @@ export class OtPlanService {
   constructor(
     private readonly otPlanRepository: OtPlanRepository,
     private readonly projectRepository: ProjectRepository,
+    private readonly otPolicyRepository: OtPolicyRepository,
   ) {}
 
   async getAll(user: AuthUserDto, filterOtPlanDto: FilterOtPlanDto) {
@@ -38,10 +41,14 @@ export class OtPlanService {
   }
 
   async createOtPlan(user: AuthUserDto, createOtPlan: CreateOtPlan) {
-    const { projectCode, startDate, endDate } = createOtPlan;
+    const { projectCode, startDate, endDate, otPolicyCode } = createOtPlan;
 
     const existManagerProject = await this.projectRepository.findOne({
       where: { code: projectCode, managerCode: user.code },
+    });
+
+    const existOtPolicy = await this.otPolicyRepository.findOne({
+      where: { code: otPolicyCode, isActive: true },
     });
 
     if (!existManagerProject) {
@@ -60,9 +67,23 @@ export class OtPlanService {
       throw new BadRequestException('Start time is in the past');
     }
 
+    if (!existOtPolicy) {
+      throw new NotFoundException('Ot policy not found');
+    }
+
+    const configOtPolicy: any = omit(existOtPolicy, [
+      'id',
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'updatedBy',
+    ]);
+
     const otPlan = this.otPlanRepository.create({
       ...createOtPlan,
       createdBy: user.code,
+      otPolicyCode,
+      configOtPolicy,
     });
 
     return await this.otPlanRepository.save(otPlan);

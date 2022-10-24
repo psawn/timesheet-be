@@ -27,4 +27,14 @@ export class CreateOtPolicyDto {
     example: 1.5,
   })
   otWorkingPoint: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(1)
+  @Max(10)
+  @ApiProperty({
+    description: 'Max day process',
+    example: 1.5,
+  })
+  maxDaysProcess: number;
 }

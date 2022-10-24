@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateOtPlan {
@@ -20,6 +21,7 @@ export class CreateOtPlan {
 
   @IsNotEmpty()
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   @ApiProperty({
     description: 'Start date',
     example: '2022-10-01',
@@ -28,6 +30,7 @@ export class CreateOtPlan {
 
   @IsNotEmpty()
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   @ApiProperty({
     description: 'End date',
     example: '2022-10-01',
@@ -41,4 +44,12 @@ export class CreateOtPlan {
     example: 'Customer requires Ot',
   })
   reason: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    description: 'Ot policy code',
+    example: 'OT_POLICY_001',
+  })
+  otPolicyCode: string;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { get, groupBy, omit, pick } from 'lodash';
 import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
@@ -14,7 +14,7 @@ import { FilterTimelogsDto } from 'src/modules/timelog/dto';
 import { Timelog } from 'src/modules/timelog/timelog.entity';
 import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { Role } from '../role/role.entity';
 import { UserRole } from '../user-role/user-role.entity';
 import { FilterUsersDto } from './dto';
@@ -407,5 +407,15 @@ export class UserRepository extends TypeORMRepository<User> {
       .andWhere('department.managerCode = :managerCode', { managerCode });
 
     return await query.getOne();
+  }
+
+  async checkUsers(codes: string[]) {
+    const countUser = await this.count({
+      where: { code: In(codes) },
+    });
+
+    if (countUser != codes.length) {
+      throw new NotFoundException('User not found');
+    }
   }
 }

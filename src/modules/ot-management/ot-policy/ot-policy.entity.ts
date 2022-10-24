@@ -20,4 +20,7 @@ export class OtPolicy extends AbstractEntity {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @Column({ name: 'max_days_process', type: 'float4', nullable: true })
+  maxDaysProcess: number;
 }

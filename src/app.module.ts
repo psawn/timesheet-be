@@ -5,8 +5,6 @@ import { DataBaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { LeaveBenefitModule } from './modules/benefit-management/leave-benefit/leave-benefit.module';
 import { DepartmentModule } from './modules/department/department.module';
-import { PolicyApproverModule } from './modules/policy-management/policy-approver/policy-approver.module';
-import { PolicyModule } from './modules/policy-management/policy/policy.module';
 import { ProjectModule } from './modules/project-management/project/project.module';
 import { RequestModule } from './modules/request-management/request/request.module';
 import { UserModule } from './modules/user-management/user/user.module';
@@ -16,6 +14,7 @@ import { CronModule } from './cron/cron.module';
 import { TimecheckModule } from './modules/timecheck/timecheck.module';
 import { TimelogModule } from './modules/timelog/timelog.module';
 import { OtManagerModule } from './modules/ot-management/ot-manager.module';
+import { PolicyManagerModule } from './modules/policy-management/policy-manager.module';
 
 @Module({
   imports: [
@@ -26,8 +25,6 @@ import { OtManagerModule } from './modules/ot-management/ot-manager.module';
     UserModule,
     DepartmentModule,
     ProjectModule,
-    PolicyModule,
-    PolicyApproverModule,
     RequestModule,
     GenWorktimeStgModule,
     LeaveBenefitModule,
@@ -35,6 +32,7 @@ import { OtManagerModule } from './modules/ot-management/ot-manager.module';
     TimecheckModule,
     TimelogModule,
     OtManagerModule,
+    PolicyManagerModule,
   ],
   controllers: [],
   providers: [],

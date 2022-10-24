@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { OtPolicy } from '../ot-policy/ot-policy.entity';
 import { FilterOtPlanDto } from './dto';
 import { OtPlan } from './ot-plan.entity';
 
@@ -36,5 +37,18 @@ export class OtPlanRepository extends TypeORMRepository<OtPlan> {
     }
 
     return this.customPaginate({ page, limit }, query);
+  }
+
+  async findOneWithPolicy(id: string) {
+    const query = this.createQueryBuilder('otPlan')
+      .leftJoinAndMapOne(
+        'otPlan.otPolicy',
+        OtPolicy,
+        'otPolicy',
+        'otPlan.otPolicyCode = otPolicy.code',
+      )
+      .where({ id });
+
+    return await query.getOne();
   }
 }

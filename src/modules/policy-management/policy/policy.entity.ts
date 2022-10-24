@@ -15,7 +15,7 @@ export class Policy extends AbstractEntity {
   @Column({ name: 'group', nullable: true })
   group: string;
 
-  @Column({ name: 'max_days_process', type: 'float', nullable: true })
+  @Column({ name: 'max_days_process', type: 'float4', nullable: true })
   maxDaysProcess: number;
 
   @Column({ name: 'use_annual_leave', nullable: true })

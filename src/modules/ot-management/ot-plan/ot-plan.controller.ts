@@ -21,7 +21,7 @@ import { OtPlanService } from './ot-plan.service';
 
 @Auth()
 @ApiTags('OtPlan')
-@Controller('ot-policies')
+@Controller('ot-plans')
 export class OtPlanController {
   constructor(private readonly otPlanService: OtPlanService) {}
 

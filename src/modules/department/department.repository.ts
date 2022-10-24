@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
-import { EntityManager, ILike } from 'typeorm';
+import { EntityManager, ILike, In } from 'typeorm';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
 import { User } from '../user-management/user/user.entity';
 import { Department } from './department.entity';
@@ -89,5 +89,15 @@ export class DepartmentRepository extends TypeORMRepository<Department> {
 
   async findByConditions(conditions: any) {
     return await this.find(conditions);
+  }
+
+  async checkDepartments(codes: string[]) {
+    const countDepartment = await this.count({
+      where: { code: In(codes) },
+    });
+
+    if (countDepartment != codes.length) {
+      throw new NotFoundException('Department not found');
+    }
   }
 }
