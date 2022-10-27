@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { get, groupBy, omit, pick } from 'lodash';
+import { get, omit, pick } from 'lodash';
 import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { hashPassword } from 'src/helpers/encrypt.helper';
@@ -314,7 +314,6 @@ export class UserRepository extends TypeORMRepository<User> {
     roleCondition: any,
     filterTimelogsDto: FilterTimelogsDto,
   ) {
-    console.log('roleCondition', roleCondition);
     const {
       page,
       limit,
@@ -324,14 +323,9 @@ export class UserRepository extends TypeORMRepository<User> {
       projectCode,
       userCode,
     } = filterTimelogsDto;
+    // const offset = (page - 1) * limit;
 
     const query = this.createQueryBuilder('user')
-      // .leftJoinAndMapOne(
-      //   'user,department',
-      //   Department,
-      //   'department',
-      //   'user.department = department.code',
-      // )
       .leftJoinAndMapMany(
         'user.timelogs',
         Timelog,
@@ -353,6 +347,10 @@ export class UserRepository extends TypeORMRepository<User> {
         'timelog.checkDate',
         'timelog.description',
       ]);
+    // wrong pagination with orderBy
+    // .take(limit)
+    // .skip(offset);
+    // .orderBy('timelog.logHour', 'ASC');
 
     if (roleCondition) {
       query.andWhere(roleCondition.condtions, roleCondition.params);
@@ -370,29 +368,7 @@ export class UserRepository extends TypeORMRepository<User> {
       query.andWhere({ code: userCode });
     }
 
-    const { items } = await this.customPaginate({ page, limit }, query);
-
-    const summary = items.map((item) => {
-      const timelogs = get(item, 'timelogs', []);
-      const grouped = groupBy(timelogs, (timelogs) => timelogs.checkDate);
-      const sumTimelogs = [];
-
-      for (const property in grouped) {
-        let sum = 0;
-        grouped[property].map((item) => (sum += item.logHour));
-        sumTimelogs.push({
-          property,
-          totalHour: sum,
-        });
-      }
-
-      return {
-        ...omit(item, ['timelogs']),
-        timelogs: sumTimelogs,
-      };
-    });
-
-    return summary;
+    return await this.customPaginate({ page, limit }, query);
   }
 
   async ckTimelogDerMng(code: string, managerCode: string) {

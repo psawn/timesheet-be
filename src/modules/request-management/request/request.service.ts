@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { get, isEmpty, omit, pick } from 'lodash';
+import { get, isEmpty, maxBy, omit, pick } from 'lodash';
 import * as moment from 'moment';
 import { RequestFlowEnum } from 'src/common/constants/request-flow.enum';
 import { StatusRequestEnum } from 'src/common/constants/status-request.enum';
@@ -21,7 +21,7 @@ import { User } from 'src/modules/user-management/user/user.entity';
 import { GenWorktimeStgRepository } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.repository';
 import { GeneralWorktime } from 'src/modules/worktime-management/general-worktime/general-worktime.entity';
 import { MailService } from 'src/shared/services/mail.service';
-import { EntityManager, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { EntityManager, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
 import { RemoteWorking } from '../remote-working/remote-working.entity';
 import { RequestDateDto } from '../request-date/dto/request-date.dto';
 import { TimeRequestDate } from '../request-date/request-date.entity';
@@ -81,11 +81,8 @@ export class RequestService {
       'workDay',
     ]);
 
-    const approvers = await this.getApprover(
-      existPolicy,
-      user.department,
-      user.managerCode,
-    );
+    const { approversTemp, approvers, order, subOrder } =
+      await this.getApproval(existPolicy, user.department, user.managerCode);
 
     if (isEmpty(approvers)) {
       throw new BadRequestException('Approver does not exist');
@@ -117,6 +114,12 @@ export class RequestService {
     );
 
     return await this.entityManager.transaction(async (transaction) => {
+      const settingApprover: any = approversTemp.map((approverTemp) => {
+        return {
+          ...omit(approverTemp, ['id', 'createdAt', 'updatedAt']),
+        };
+      });
+
       const request = transaction.create(TimeRequest, {
         ...createRequestDto,
         userCode: user.code,
@@ -124,6 +127,10 @@ export class RequestService {
         expireTime,
         policyType: existPolicy.typeCode,
         totalDate,
+        order,
+        subOrder,
+        flowType: get(existPolicy, 'flow.flowType'),
+        settingApprover,
       });
 
       await transaction.save(TimeRequest, request);
@@ -178,15 +185,15 @@ export class RequestService {
 
       const toEmails = emailArr.join(',');
 
-      const config = {
-        from: '"📧 Timesheet notification" <huynvth2001006@fpt.edu.vn>',
-        to: toEmails,
-        subject: 'One request have been assigned to you',
-        text: 'Timesheet notification',
-        html: '<b>One request have been to assigned to you. Please check it.</b>',
-      };
+      // const config = {
+      //   from: '"📧 Timesheet notification" <huynvth2001006@fpt.edu.vn>',
+      //   to: toEmails,
+      //   subject: 'One request have been assigned to you',
+      //   text: 'Timesheet notification',
+      //   html: '<b>One request have been to assigned to you. Please check it.</b>',
+      // };
 
-      await this.mailService.sendMail(config);
+      // await this.mailService.sendMail(config);
 
       return request;
     });
@@ -260,7 +267,9 @@ export class RequestService {
         throw new NotFoundException('Request not found');
       }
 
-      if (!get(existRequest, 'approvers', []).length) {
+      const approvers = get(existRequest, 'approvers', []);
+
+      if (!approvers.length) {
         throw new ForbiddenException(`User don't have permissions`);
       }
 
@@ -274,58 +283,43 @@ export class RequestService {
         timezone: existRequest.timezone,
       };
 
-      // const query = this.requestRepository
-      //   .createQueryBuilder('request')
-      //   .leftJoinAndMapOne(
-      //     'request.sender',
-      //     User,
-      //     'sender',
-      //     'request.userCode = sender.code',
-      //   )
-      //   .leftJoinAndMapMany(
-      //     'request.workingTimes',
-      //     RequestWorkingDate,
-      //     'workingTime',
-      //     'request.id = workingTime.requestId',
-      //   )
-      //   .where({ id, approverCode: user.code });
-
-      // const existRequest = await query.getOne();
-
-      // if (!existRequest) {
-      //   throw new NotFoundException('Request for approver not found');
-      // }
-
-      // const group = get(existRequest, 'configPolicy.group', null);
-      // const workingDates = get(existRequest, 'workingTimes', []);
-
-      // const config = {
-      //   workDay: get(existRequest, 'configPolicy.workDay', null),
-      //   username: get(existRequest, 'sender.name', null),
-      //   userCode: existRequest.userCode,
-      //   timezone: existRequest.timezone,
-      // };
-
-      if (existRequest.status !== StatusRequestEnum.WAITING) {
+      if (
+        existRequest.status !== StatusRequestEnum.WAITING &&
+        existRequest.status !== StatusRequestEnum.CANCELLED
+      ) {
         throw new BadRequestException('Request status is not WAITING');
       }
 
-      // await this.entityManager.transaction(async (transaction) => {
-      //   existRequest.status = status;
-      //   transaction.save(TimeRequest, existRequest);
+      await this.entityManager.transaction(async (transaction) => {
+        await transaction.save(
+          RequestApprover,
+          approvers.map((approver) => {
+            return { ...approver, status };
+          }),
+        );
 
-      //   if (status == StatusRequestEnum.APPROVED) {
-      //     await this.handleMappingBusiness(
-      //       transaction,
-      //       group,
-      //       existRequest.policyType,
-      //       workingDates,
-      //       config,
-      //     );
-      //   }
-      // });
+        if (status == StatusRequestEnum.APPROVED) {
+          const approvedRequest = await this.handleApprovedRequest(
+            transaction,
+            existRequest,
+            approvers,
+          );
 
-      console.log('existRequest', existRequest);
+          if (approvedRequest) {
+            await this.handleMappingBusiness(
+              transaction,
+              group,
+              existRequest.policyType,
+              workingDates,
+              config,
+            );
+          }
+        }
+
+        if (status == StatusRequestEnum.REJECTED) {
+          await this.handleRejectedRequest(transaction, id);
+        }
+      });
     }
   }
 
@@ -524,14 +518,17 @@ export class RequestService {
     await transaction.save(RemoteWorking, remoteWorkings);
   }
 
-  async getApprover(
+  async getApproval(
     policy: Policy,
     departmentCode: string,
     managerCode: string,
   ) {
-    const approvers = [];
     const flowType = get(policy, 'flow.flowType', null);
-    let approvals = get(policy, 'flow.approvals', null);
+    const approvals = get(policy, 'flow.approvals', null);
+    const order = maxBy(approvals, 'order')['order'];
+    const subOrder = maxBy(approvals, 'subOrder')['subOrder'];
+    const approversInfo = [];
+    let approvers;
 
     if (!approvals) {
       throw new NotFoundException('Setting approval not found');
@@ -541,24 +538,33 @@ export class RequestService {
       throw new NotFoundException('Flow type not found');
     }
 
-    if (flowType == RequestFlowEnum.SEQUENCE) {
-      approvals = approvals
-        .filter((item) => {
-          return item.order === 1;
-        })
-        .filter((item) => {
-          if (!item.nextByOneApprove) return item.subOrder === 1;
-          return item;
-        });
-    }
-
     for (const approval of approvals) {
-      approvers.push(
+      approversInfo.push(
         await this.getApproverInfo(approval, departmentCode, managerCode),
       );
     }
 
-    return approvers;
+    const approversTemp = approversInfo;
+
+    if (flowType == RequestFlowEnum.SEQUENCE) {
+      approvers = approversInfo.filter((item) => {
+        if (item.order !== 1) {
+          return false;
+        }
+
+        if (
+          !item.nextByOneApprove &&
+          item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+        ) {
+          return item.subOrder === 1;
+        }
+        return item;
+      });
+    } else {
+      approvers = approversInfo;
+    }
+
+    return { approversTemp, approvers, order, subOrder };
   }
 
   async getApproverInfo(
@@ -577,9 +583,10 @@ export class RequestService {
             ...approval,
             userCode: department.managerCode,
           };
+        } else {
+          throw new NotFoundException('Department manager not found');
         }
 
-        break;
       case ApproverTypeEnum.DIRECT_MANAGER:
         const directManager = await this.userRepository.findOne({
           where: { code: managerCode },
@@ -590,9 +597,10 @@ export class RequestService {
             ...approval,
             userCode: directManager.code,
           };
+        } else {
+          throw new NotFoundException('Direct manager not found');
         }
 
-        break;
       default:
         return { ...approval };
     }
@@ -630,5 +638,190 @@ export class RequestService {
     }
 
     return { totalDate, workingDates };
+  }
+
+  async handleRejectedRequest(transaction: EntityManager, id: string) {
+    await transaction.update(
+      TimeRequest,
+      { id },
+      { status: StatusRequestEnum.REJECTED },
+    );
+  }
+
+  async handleApprovedRequest(
+    transaction: EntityManager,
+    existRequest: TimeRequest,
+    approvers: any[],
+  ) {
+    const approversTemp = existRequest.settingApprover;
+
+    for (const approver of approvers) {
+      await this.updateSameOrder(
+        transaction,
+        existRequest.id,
+        approver.order,
+        approver.nextByOneApprove,
+      );
+
+      await this.updateOtherOrder(transaction, existRequest, approver);
+
+      await this.createNewApprover(
+        transaction,
+        existRequest,
+        approver,
+        approversTemp,
+      );
+    }
+
+    const checkApproverStatus = await transaction.findOne(RequestApprover, {
+      where: {
+        status: StatusRequestEnum.APPROVED,
+        order: existRequest.order,
+        subOrder: existRequest.subOrder,
+      },
+    });
+
+    if (checkApproverStatus) {
+      existRequest.status = StatusRequestEnum.APPROVED;
+      await transaction.save(TimeRequest, existRequest);
+      return true;
+    }
+  }
+
+  async createNewApprover(
+    transaction: EntityManager,
+    existRequest: TimeRequest,
+    approver: any,
+    approversTemp: any[],
+  ) {
+    if (existRequest.flowType == RequestFlowEnum.SEQUENCE) {
+      const currentSubOrder = approver.subOrder;
+      const currentOrder = approver.order;
+
+      let newApproverArr;
+
+      if (currentSubOrder == null) {
+        newApproverArr = approversTemp.filter((item) => {
+          if (item.order !== currentOrder + 1) {
+            return false;
+          }
+
+          if (
+            !item.nextByOneApprove &&
+            item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+          ) {
+            return item.subOrder === 1;
+          }
+
+          return item;
+        });
+      }
+
+      if (currentSubOrder != null) {
+        newApproverArr = approversTemp.filter((item) => {
+          if (
+            item.order == currentOrder &&
+            item.subOrder == currentSubOrder + 1 &&
+            item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+          ) {
+            return item;
+          }
+        });
+
+        if (!newApproverArr.length) {
+          newApproverArr = approversTemp.filter((item) => {
+            if (item.order !== currentOrder + 1) {
+              return false;
+            }
+
+            if (
+              !item.nextByOneApprove &&
+              item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+            ) {
+              return item.subOrder === 1;
+            }
+
+            return item;
+          });
+        }
+      }
+
+      const newApprovers = transaction.create(
+        RequestApprover,
+        newApproverArr.map((newApprover) => {
+          return { ...newApprover, requestId: existRequest.id };
+        }),
+      );
+
+      await transaction.save(RequestApprover, newApprovers);
+    }
+  }
+
+  async updateSameOrder(
+    transaction: EntityManager,
+    requestId: string,
+    order: number,
+    nextByOneApprove: boolean,
+  ) {
+    if (nextByOneApprove) {
+      await transaction.update(
+        RequestApprover,
+        { requestId, order },
+        { status: StatusRequestEnum.APPROVED },
+      );
+    }
+  }
+
+  async updateOtherOrder(
+    transaction: EntityManager,
+    existRequest: TimeRequest,
+    approver: any,
+  ) {
+    const flowType = existRequest.flowType;
+    const approveForAll = get(existRequest, 'flow.approveForAll', null);
+
+    if (flowType == RequestFlowEnum.PARALLEL) {
+      const countOtherStatus = await transaction.count(RequestApprover, {
+        where: {
+          requestId: existRequest.id,
+          order: approver.order,
+          status: Not(StatusRequestEnum.APPROVED),
+        },
+      });
+
+      if (approveForAll && countOtherStatus == 0) {
+        return await transaction.update(
+          RequestApprover,
+          {
+            requestId: existRequest.id,
+          },
+          {
+            status: StatusRequestEnum.APPROVED,
+          },
+        );
+      }
+    }
+
+    if (flowType == RequestFlowEnum.SEQUENCE) {
+      const countOtherStatus = await transaction.count(RequestApprover, {
+        where: {
+          requestId: existRequest.id,
+          order: 1,
+          status: Not(StatusRequestEnum.APPROVED),
+        },
+      });
+
+      if (approveForAll && countOtherStatus == 0 && approver.order == 1) {
+        return await transaction.update(
+          RequestApprover,
+          {
+            requestId: existRequest.id,
+          },
+          {
+            status: StatusRequestEnum.APPROVED,
+          },
+        );
+      }
+    }
   }
 }

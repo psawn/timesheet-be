@@ -40,8 +40,11 @@ export class TimelogController {
     @AuthUser() user: AuthUserDto,
     @Query() filterTimelogsDto: FilterTimelogsDto,
   ) {
-    const data = await this.timelogService.getAll(user, filterTimelogsDto);
-    return { data };
+    const { summary, pagination } = await this.timelogService.getAll(
+      user,
+      filterTimelogsDto,
+    );
+    return { data: summary, pagination };
   }
 
   @Post()
@@ -89,6 +92,23 @@ export class TimelogController {
     return { data };
   }
 
+  @Get('/detail-my-timelogs')
+  @ApiResponse({
+    status: 200,
+    description: 'Get my timelogs successfully.',
+  })
+  @customDecorators()
+  async getDetailMyTimelogs(
+    @AuthUser() user: AuthUserDto,
+    @Query('checkDate') checkDate: Date,
+  ) {
+    const data = await this.timelogService.getDetailMyTimelogs(
+      user.code,
+      checkDate,
+    );
+    return { data };
+  }
+
   @Roles(RoleCodeEnum.ADMIN, RoleCodeEnum.DER_MANAGER, RoleCodeEnum.DIR_MANAGER)
   @Get('/:userCode')
   @ApiResponse({
@@ -99,13 +119,13 @@ export class TimelogController {
   async getUserTimelogs(
     @AuthUser() user: AuthUserDto,
     @Param('userCode') userCode: string,
-    @Query() filterDetailTimelogsDto: FilterDetailTimelogsDto,
+    @Query('checkDate') checkDate: Date,
   ) {
-    const data = await this.timelogService.getDetaliTimelogs(
-      userCode,
-      filterDetailTimelogsDto,
+    const timelogs = await this.timelogService.getUserTimelogs(
       user,
+      userCode,
+      checkDate,
     );
-    return { data };
+    return { data: timelogs };
   }
 }

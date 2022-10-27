@@ -1,18 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { PageLimitDto } from 'src/common/dto/page-limit.dto';
+import { IsDate, IsNotEmpty } from 'class-validator';
 
-export class FilterDetailTimelogsDto extends PageLimitDto {
-  @IsOptional()
-  @IsString()
-  @ApiProperty({
-    description: 'Project code',
-    example: 'PRJ001',
-    required: false,
-  })
-  projectCode: string;
-
+export class FilterDetailTimelogsDto {
   @IsNotEmpty()
   @IsDate()
   @Transform(({ value }) => new Date(value))

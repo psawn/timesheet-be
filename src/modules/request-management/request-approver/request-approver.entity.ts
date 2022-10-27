@@ -21,4 +21,7 @@ export class RequestApprover extends AbstractEntity {
 
   @Column({ name: 'next_by_one_approve', default: false })
   nextByOneApprove: boolean;
+
+  @Column({ name: 'approver_type' })
+  approverType: string;
 }

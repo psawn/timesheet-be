@@ -29,22 +29,4 @@ export class ProjectUserRepository extends TypeORMRepository<ProjectUser> {
       { isActive: false },
     );
   }
-
-  async findUserInProject(projectCode: string, userCode: string) {
-    const query = this.createQueryBuilder('mapping')
-      .leftJoinAndMapOne(
-        'mapping.project',
-        Project,
-        'project',
-        'mapping.projectCode = project.code',
-      )
-      .where({
-        isActive: true,
-        userCode,
-        projectCode,
-      })
-      .andWhere('project.isActive = true');
-
-    return query.getOne();
-  }
 }

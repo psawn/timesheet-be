@@ -21,6 +21,10 @@ export class TypeORMRepository<T> extends Repository<T> {
   async customPaginate(options: PageLimitDto, query: SelectQueryBuilder<T>) {
     const page = options.page || PaginationConstants.DEFAULT_PAGE;
     const limit = options.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
+    const offset = (page - 1) * limit;
+
+    query.take(limit).skip(offset);
+
     const [items, totalItems] = await query.getManyAndCount();
 
     return {

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DepartmentRepository } from '../department/department.repository';
 import { ProjectUserRepository } from '../project-management/project-user/project-user.repository';
-import { ProjectRepository } from '../project-management/project/project.repository';
+import { TimecheckRepository } from '../timecheck/timecheck.repository';
 import { UserRepository } from '../user-management/user/user.repository';
 import { TimelogController } from './timelog.controller';
 import { Timelog } from './timelog.entity';
@@ -17,8 +17,8 @@ import { TimelogService } from './timelog.service';
     TimelogRepository,
     UserRepository,
     ProjectUserRepository,
-    ProjectRepository,
     DepartmentRepository,
+    TimecheckRepository,
   ],
   exports: [],
 })

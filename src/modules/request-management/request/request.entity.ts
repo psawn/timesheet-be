@@ -30,4 +30,16 @@ export class TimeRequest extends AbstractEntity {
 
   @Column({ name: 'total_date', type: 'float4', default: 0 })
   totalDate: number;
+
+  @Column({ name: 'order', type: 'int2' })
+  order: number;
+
+  @Column({ name: 'sub_order', type: 'int2', nullable: true })
+  subOrder: number;
+
+  @Column({ name: 'flow_type', nullable: false })
+  flowType: string;
+
+  @Column({ name: 'setting_approver', type: 'jsonb', nullable: false })
+  settingApprover: any[];
 }

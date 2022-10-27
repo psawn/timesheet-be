@@ -12,6 +12,7 @@ import {
 export class CreateTimelogDto {
   @IsNotEmpty()
   @IsString()
+  @Transform(({ value }) => value.toUpperCase())
   @ApiProperty({
     description: 'Project code',
     example: 'PRJ001',

@@ -3,8 +3,6 @@ import { PaginationConstants } from 'src/common/constants/pagination.enum';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { Department } from 'src/modules/department/department.entity';
-import { FilterDetailTimelogsDto } from 'src/modules/timelog/dto';
-import { Timelog } from 'src/modules/timelog/timelog.entity';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { EntityManager, ILike } from 'typeorm';
 import { ProjectUser } from '../project-user/project-user.entity';
@@ -154,41 +152,5 @@ export class ProjectRepository extends TypeORMRepository<Project> {
         currentPage: +page,
       },
     };
-  }
-
-  async getDetailTimelogs(
-    userCode: string,
-    filterDetailTimelogsDto: FilterDetailTimelogsDto,
-  ) {
-    const { page, limit, projectCode, startDate, endDate } =
-      filterDetailTimelogsDto;
-
-    const query = this.createQueryBuilder('project')
-      .leftJoinAndMapMany(
-        'project.timelogs',
-        Timelog,
-        'timelog',
-        'project.code = timelog.projectCode AND timelog.checkDate >= :startDate AND timelog.checkDate <= :endDate',
-        {
-          startDate,
-          endDate,
-        },
-      )
-      .select([
-        'project.id',
-        'project.code',
-        'project.name',
-        'timelog.id',
-        'timelog.logHour',
-        'timelog.description',
-        'timelog.checkDate',
-      ])
-      .where('timelog.userCode = :userCode', { userCode });
-
-    if (projectCode) {
-      query.andWhere('timelog.projectCode = :projectCode', { projectCode });
-    }
-
-    return await this.customPaginate({ page, limit }, query);
   }
 }
