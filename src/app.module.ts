@@ -17,7 +17,7 @@ import { OtManagerModule } from './modules/ot-management/ot-manager.module';
 import { PolicyManagerModule } from './modules/policy-management/policy-manager.module';
 import { RabitmqModule } from './rabbitmq/rabbitmq.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { DefaultIfEmptyInterceptor } from './test.middleware';
+import { DefaultIfEmptyInterceptor } from './middleware/default-intercepter.middleware';
 
 @Module({
   imports: [
