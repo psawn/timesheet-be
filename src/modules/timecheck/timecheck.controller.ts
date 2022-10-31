@@ -52,7 +52,7 @@ export class TimecheckController {
       user,
       filterTimecheckDto,
     );
-    return { data: items, pagination: pagination };
+    return { data: items, pagination };
   }
 
   @Post('/check-in')

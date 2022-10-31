@@ -15,6 +15,9 @@ import { TimecheckModule } from './modules/timecheck/timecheck.module';
 import { TimelogModule } from './modules/timelog/timelog.module';
 import { OtManagerModule } from './modules/ot-management/ot-manager.module';
 import { PolicyManagerModule } from './modules/policy-management/policy-manager.module';
+import { RabitmqModule } from './rabbitmq/rabbitmq.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { DefaultIfEmptyInterceptor } from './test.middleware';
 
 @Module({
   imports: [
@@ -33,8 +36,14 @@ import { PolicyManagerModule } from './modules/policy-management/policy-manager.
     TimelogModule,
     OtManagerModule,
     PolicyManagerModule,
+    RabitmqModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DefaultIfEmptyInterceptor,
+    },
+  ],
 })
 export class AppModule {}

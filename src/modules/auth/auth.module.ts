@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RabitmqModule } from 'src/rabbitmq/rabbitmq.module';
 import { ConfigService } from 'src/shared/services/config.service';
 import { LeaveBenefitRepository } from '../benefit-management/leave-benefit/leave-benefit.repository';
 import { User } from '../user-management/user/user.entity';
@@ -20,6 +21,7 @@ const configService = new ConfigService();
         expiresIn: configService.jwt.accessJWTExpire,
       },
     }),
+    RabitmqModule,
   ],
   controllers: [AuthController],
   providers: [

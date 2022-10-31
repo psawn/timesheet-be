@@ -42,6 +42,36 @@ export class CreateGenWorktimeStgDto {
       },
       {
         dayOfWeek: 1,
+        isDayOff: false,
+        checkInTime: '08:00',
+        checkOutTime: '18:00',
+      },
+      {
+        dayOfWeek: 2,
+        isDayOff: false,
+        checkInTime: '08:00',
+        checkOutTime: '18:00',
+      },
+      {
+        dayOfWeek: 3,
+        isDayOff: false,
+        checkInTime: '08:00',
+        checkOutTime: '18:00',
+      },
+      {
+        dayOfWeek: 4,
+        isDayOff: false,
+        checkInTime: '08:00',
+        checkOutTime: '18:00',
+      },
+      {
+        dayOfWeek: 5,
+        isDayOff: false,
+        checkInTime: '08:00',
+        checkOutTime: '18:00',
+      },
+      {
+        dayOfWeek: 6,
         isDayOff: true,
         checkInTime: '08:00',
         checkOutTime: '18:00',

@@ -1,14 +1,18 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 import { SignInDto, SignUpDto } from './dto';
 import { AuthService } from './auth.service';
+import { RabbitmqService } from 'src/rabbitmq/rabbitmq.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly rabbitmqService: RabbitmqService,
+  ) {}
 
   @Post('/signup')
   @ApiResponse({
@@ -35,5 +39,17 @@ export class AuthController {
       message: 'Login successfully.',
       data,
     };
+  }
+
+  @Get('/test')
+  async test() {
+    await this.rabbitmqService.getHello();
+    await this.rabbitmqService.getHelloAsync();
+    await this.rabbitmqService.publishEvent();
+  }
+
+  @Post('/post-test')
+  async createPost() {
+    return await this.rabbitmqService.test();
   }
 }
