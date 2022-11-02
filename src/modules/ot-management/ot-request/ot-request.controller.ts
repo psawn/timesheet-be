@@ -1,10 +1,10 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Post, Put, ValidationPipe } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { Auth } from 'src/decorators/auth.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
-import { CreateOtRequestDto } from './dto/create-ot-request.dto';
+import { ChangeOtRequestStatus, CreateOtRequestDto } from './dto';
 import { OtRequestService } from './ot-request.service';
 
 @Auth()
@@ -28,5 +28,22 @@ export class OtRequestController {
       createOtRequestDto,
     );
     return { data: otRequest };
+  }
+
+  @Put('/change-status')
+  @ApiResponse({
+    status: 200,
+    description: 'Change status requests successfully.',
+  })
+  @customDecorators()
+  async changeStatus(
+    @AuthUser() user: AuthUserDto,
+    @Body(ValidationPipe) changeOtRequestStatus: ChangeOtRequestStatus,
+  ) {
+    const otRequest = await this.otRequestService.changeStatus(
+      user,
+      changeOtRequestStatus,
+    );
+    return { date: otRequest };
   }
 }

@@ -59,4 +59,21 @@ export class Timecheck extends AbstractEntity {
 
   @Column({ name: 'is_day_off', type: 'boolean', default: false })
   isDayOff: boolean;
+
+  @Column({
+    name: 'ot_work_hour',
+    type: 'numeric',
+    precision: 3,
+    scale: 1,
+    default: 0,
+    transformer: {
+      to(value) {
+        return value;
+      },
+      from(value) {
+        return +value;
+      },
+    },
+  })
+  otWorkHour: number;
 }

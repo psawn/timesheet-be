@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { ProjectRepository } from 'src/modules/project-management/project/project.repository';
 import { OtPolicyRepository } from '../ot-policy/ot-policy.repository';
 import { OtPlanController } from './ot-plan.controller';
@@ -15,6 +16,7 @@ import { OtPlanService } from './ot-plan.service';
     OtPlanRepository,
     ProjectRepository,
     OtPolicyRepository,
+    DepartmentRepository,
   ],
   exports: [],
 })

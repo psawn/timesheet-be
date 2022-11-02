@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApproverTypeEnum } from 'src/common/constants/approver.enum';
-import { SubOrderUserDto } from 'src/modules/ot-management/ot-request-flow-approval/dto';
+import { SubOrderUserDto } from 'src/modules/ot-management/ot-policy-flow-approval/dto';
 
 export class PolicyFlowApprovalDto {
   @IsNotEmpty()

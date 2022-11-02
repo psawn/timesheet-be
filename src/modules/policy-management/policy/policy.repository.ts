@@ -94,7 +94,7 @@ export class PolicyRepository extends TypeORMRepository<Policy> {
     await this.update({ code }, { ...updatePolicyDto, updatedBy: user.code });
   }
 
-  async getPolicyWithApprover(code: string, departmentCode?: string) {
+  async getPolicyInfo(code: string, departmentCode?: string) {
     const query = this.createQueryBuilder('policy')
       .leftJoinAndMapOne(
         'policy.flow',

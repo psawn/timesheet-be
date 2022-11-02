@@ -40,7 +40,7 @@ export class GenWorktimeStgService {
         createdBy: user.code,
       });
 
-      await worktimeStg.save();
+      await transaction.save(GeneralWorktimeSetting, worktimeStg);
 
       if (worktimes.length) {
         const worktimeData = transaction.create(
@@ -48,7 +48,7 @@ export class GenWorktimeStgService {
           worktimes.map((worktime) => {
             return {
               ...worktime,
-              workTimeCode: worktimeStg.code,
+              worktimeCode: worktimeStg.code,
             };
           }),
         );

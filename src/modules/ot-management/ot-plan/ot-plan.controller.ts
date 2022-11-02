@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,7 +17,12 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
-import { CreateOtPlan, FilterOtPlanDto, UpdateOtPlanDto } from './dto';
+import {
+  ChangeStatusOtPlanDto,
+  CreateOtPlan,
+  FilterOtPlanDto,
+  UpdateOtPlanDto,
+} from './dto';
 import { OtPlanService } from './ot-plan.service';
 
 @Auth()
@@ -68,7 +74,26 @@ export class OtPlanController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateOtPlanDto: UpdateOtPlanDto,
   ) {
-    await this.otPlanService.updateOtPlan(user, id, updateOtPlanDto);
+    const otPlan = await this.otPlanService.updateOtPlan(
+      user,
+      id,
+      updateOtPlanDto,
+    );
+    return { data: otPlan };
+  }
+
+  @Roles(RoleCodeEnum.DER_MANAGER)
+  @Put('/change-status')
+  @ApiResponse({
+    status: 200,
+    description: 'Change status ot plans successfully.',
+  })
+  @customDecorators()
+  async changeStatus(
+    @AuthUser() user: AuthUserDto,
+    @Body(ValidationPipe) changeStatusOtPlanDto: ChangeStatusOtPlanDto,
+  ) {
+    await this.otPlanService.changeStatus(user, changeStatusOtPlanDto);
     return { data: null };
   }
 }

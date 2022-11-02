@@ -35,7 +35,7 @@ export class CreatePolicyDto {
   @IsEnum(RequestTypeCode)
   @ApiProperty({
     description: 'Type code',
-    example: RequestTypeCode.AFTERNOON_ABSENT,
+    example: RequestTypeCode.MISSING_IN,
   })
   typeCode: string;
 
@@ -43,7 +43,7 @@ export class CreatePolicyDto {
   @IsEnum(PolicyGroup)
   @ApiProperty({
     description: 'Group',
-    example: PolicyGroup.ABSENCE,
+    example: PolicyGroup.ATTENDANCE,
     enum: PolicyGroup,
   })
   group: string;
@@ -71,7 +71,7 @@ export class CreatePolicyDto {
   @Max(1)
   @ApiProperty({
     description: 'Number of minus work day',
-    example: 0.5,
+    example: 0,
   })
   workDay: number;
 }

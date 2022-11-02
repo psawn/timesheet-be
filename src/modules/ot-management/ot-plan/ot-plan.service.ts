@@ -6,9 +6,16 @@ import {
 import { omit } from 'lodash';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { DepartmentRepository } from 'src/modules/department/department.repository';
 import { ProjectRepository } from 'src/modules/project-management/project/project.repository';
+import { In } from 'typeorm';
 import { OtPolicyRepository } from '../ot-policy/ot-policy.repository';
-import { CreateOtPlan, FilterOtPlanDto, UpdateOtPlanDto } from './dto';
+import {
+  ChangeStatusOtPlanDto,
+  CreateOtPlan,
+  FilterOtPlanDto,
+  UpdateOtPlanDto,
+} from './dto';
 import { OtPlanRepository } from './ot-plan.repository';
 
 @Injectable()
@@ -17,6 +24,7 @@ export class OtPlanService {
     private readonly otPlanRepository: OtPlanRepository,
     private readonly projectRepository: ProjectRepository,
     private readonly otPolicyRepository: OtPolicyRepository,
+    private readonly departmentRepository: DepartmentRepository,
   ) {}
 
   async getAll(user: AuthUserDto, filterOtPlanDto: FilterOtPlanDto) {
@@ -57,6 +65,14 @@ export class OtPlanService {
       );
     }
 
+    const departmentManager = await this.departmentRepository.findOne({
+      where: { isActive: true, code: existManagerProject.departmentCode },
+    });
+
+    if (!departmentManager) {
+      throw new NotFoundException('Department manager not found');
+    }
+
     if (startDate > endDate) {
       throw new BadRequestException(
         'End date need to be grater than start date',
@@ -84,6 +100,7 @@ export class OtPlanService {
       createdBy: user.code,
       otPolicyCode,
       configOtPolicy,
+      approverCode: departmentManager.managerCode,
     });
 
     return await this.otPlanRepository.save(otPlan);
@@ -115,5 +132,22 @@ export class OtPlanService {
     }
 
     return await this.otPlanRepository.save(existOtPlan);
+  }
+
+  async changeStatus(
+    user: AuthUserDto,
+    changeStatusOtPlanDto: ChangeStatusOtPlanDto,
+  ) {
+    const { otPlanIds, status } = changeStatusOtPlanDto;
+
+    const countOtPlan = await this.otPlanRepository.count({
+      where: { id: In(otPlanIds), approverCode: user.code },
+    });
+
+    if (countOtPlan != otPlanIds.length) {
+      throw new NotFoundException('Ot plan is not found');
+    }
+
+    await this.otPlanRepository.update({ id: In(otPlanIds) }, { status });
   }
 }

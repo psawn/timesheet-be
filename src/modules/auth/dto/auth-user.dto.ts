@@ -7,4 +7,5 @@ export class AuthUserDto {
   public readonly department: string;
   public readonly managerCode: string;
   public readonly name: string;
+  public readonly worktimeCode: string;
 }

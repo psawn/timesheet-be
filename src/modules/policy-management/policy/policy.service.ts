@@ -72,7 +72,7 @@ export class PolicyService {
   }
 
   // async getApprover(user: AuthUserDto, code: string) {
-  //   const policy = await this.policyRepository.getPolicyWithApprover(
+  //   const policy = await this.policyRepository.getPolicyInfo(
   //     code,
   //     user.managerCode,
   //     user.department,

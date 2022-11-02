@@ -10,9 +10,9 @@ import {
 } from 'class-validator';
 import { ApproverTypeEnum } from 'src/common/constants/approver.enum';
 import { RequestFlowEnum } from 'src/common/constants/request-flow.enum';
-import { OtRequestFlowApprovalDto } from '../../ot-request-flow-approval/dto';
+import { OtPolicyFlowApprovalDto } from '../../ot-policy-flow-approval/dto';
 
-export class CreateOtRequestFlow {
+export class CreateOtPolicyFlow {
   @IsNotEmpty()
   @IsArray()
   @ApiProperty({
@@ -39,7 +39,7 @@ export class CreateOtRequestFlow {
 
   @ArrayNotEmpty()
   @IsArray()
-  @Type(() => OtRequestFlowApprovalDto)
+  @Type(() => OtPolicyFlowApprovalDto)
   @ValidateNested({ each: true })
   @ApiProperty({
     description: 'Ot request date',
@@ -73,5 +73,5 @@ export class CreateOtRequestFlow {
       },
     ],
   })
-  otRequestFlowApprovals: OtRequestFlowApprovalDto[];
+  otPolicyFlowApprovals: OtPolicyFlowApprovalDto[];
 }

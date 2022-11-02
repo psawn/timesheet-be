@@ -12,7 +12,7 @@ import {
 import { ApproverTypeEnum } from 'src/common/constants/approver.enum';
 import { SubOrderUserDto } from '.';
 
-export class OtRequestFlowApprovalDto {
+export class OtPolicyFlowApprovalDto {
   @IsNotEmpty()
   @IsInt()
   @Min(1)

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -20,6 +21,7 @@ import {
   ChangeRequestStatus,
   CreateRequestDto,
   FilterRequestsDto,
+  UpdateRequestDto,
 } from './dto';
 import { RequestService } from './request.service';
 import * as nodemailer from 'nodemailer';
@@ -114,10 +116,10 @@ export class RequestController {
   })
   @customDecorators()
   async getMyRequest(
-    @AuthUser() user: AuthUserDto,
     @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() user: AuthUserDto,
   ) {
-    const request = await this.requestService.getMyRequest(user, id);
+    const request = await this.requestService.getMyRequest(id, user);
     return { data: request };
   }
 
@@ -136,6 +138,25 @@ export class RequestController {
       changeRequestStatus,
     );
     return { date: request };
+  }
+
+  @Patch('/:id')
+  @ApiResponse({
+    status: 200,
+    description: 'Update request successfully.',
+  })
+  @customDecorators()
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() user: AuthUserDto,
+    @Body(ValidationPipe) updateRequestDto: UpdateRequestDto,
+  ) {
+    const request = await this.requestService.update(
+      id,
+      user,
+      updateRequestDto,
+    );
+    return { data: request };
   }
 
   // @Get('/test/email')

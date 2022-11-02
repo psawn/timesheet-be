@@ -10,18 +10,18 @@ import { DepartmentRepository } from 'src/modules/department/department.reposito
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
 import { EntityManager, In } from 'typeorm';
 import { OtPolicyRepository } from '../ot-policy/ot-policy.repository';
-import { OtRequestFlowApprovalDto } from '../ot-request-flow-approval/dto';
-import { OtRequestFlowApproval } from '../ot-request-flow-approval/ot-request-flow-approval.entity';
-import { CreateOtRequestFlow } from './dto';
-import { OtRequestFlow } from './ot-request-flow.entity';
-import { OtRequestFlowRepository } from './ot-request-flow.repository';
+import { OtPolicyFlowApprovalDto } from '../ot-policy-flow-approval/dto';
+import { OtPolicyFlowApproval } from '../ot-policy-flow-approval/ot-policy-flow-approval.entity';
+import { CreateOtPolicyFlow } from './dto';
+import { OtPolicyFlow } from './ot-policy-flow.entity';
+import { OtPolicyFlowRepository } from './ot-policy-flow.repository';
 
 @Injectable()
-export class OtRequestFlowService {
+export class OtPolicyFlowService {
   constructor(
     @InjectEntityManager()
     private readonly entityManager: EntityManager,
-    private readonly otRequestFlowRepository: OtRequestFlowRepository,
+    private readonly otPolicyFlowRepository: OtPolicyFlowRepository,
     private readonly otPolicyRepository: OtPolicyRepository,
     private readonly departmentRepository: DepartmentRepository,
     private readonly userRepository: UserRepository,
@@ -30,9 +30,9 @@ export class OtRequestFlowService {
   async create(
     otPolicyCode: string,
     user: AuthUserDto,
-    createOtRequestFlow: CreateOtRequestFlow,
+    createOtPolicyFlow: CreateOtPolicyFlow,
   ) {
-    const { departmentCodes } = createOtRequestFlow;
+    const { departmentCodes } = createOtPolicyFlow;
 
     const existOtPolicy = await this.otPolicyRepository.findOne({
       where: { code: otPolicyCode },
@@ -53,7 +53,7 @@ export class OtRequestFlowService {
             transaction,
             otPolicyCode,
             departmentCode,
-            createOtRequestFlow,
+            createOtPolicyFlow,
             user.code,
           );
         }
@@ -65,7 +65,7 @@ export class OtRequestFlowService {
         transaction,
         otPolicyCode,
         null,
-        createOtRequestFlow,
+        createOtPolicyFlow,
         user.code,
       );
     });
@@ -75,13 +75,13 @@ export class OtRequestFlowService {
     transaction: EntityManager,
     otPolicyCode: string,
     departmentCode: string,
-    createOtRequestFlow: CreateOtRequestFlow,
+    createOtPolicyFlow: CreateOtPolicyFlow,
     userCode: string,
   ) {
-    const { flowType, approveForAll, otRequestFlowApprovals } =
-      createOtRequestFlow;
+    const { flowType, approveForAll, otPolicyFlowApprovals } =
+      createOtPolicyFlow;
 
-    const otRequestFlow = transaction.create(OtRequestFlow, {
+    const otPolicyFlow = transaction.create(OtPolicyFlow, {
       otPolicyCode,
       department: departmentCode,
       isGlobalFlow: departmentCode ? false : true,
@@ -90,23 +90,23 @@ export class OtRequestFlowService {
       createdBy: userCode,
     });
 
-    await transaction.save(OtRequestFlow, otRequestFlow);
+    await transaction.save(OtPolicyFlow, otPolicyFlow);
 
-    await this.createOtRequestFlowApproval(
+    await this.createOtPolicyFlowApproval(
       transaction,
-      otRequestFlow.id,
-      otRequestFlowApprovals,
+      otPolicyFlow.id,
+      otPolicyFlowApprovals,
     );
   }
 
-  async createOtRequestFlowApproval(
+  async createOtPolicyFlowApproval(
     transaction: EntityManager,
-    otRequestFlowId: string,
-    otRequestFlowApprovals: OtRequestFlowApprovalDto[],
+    otPolicyFlowId: string,
+    otPolicyFlowApprovals: OtPolicyFlowApprovalDto[],
   ) {
     const savedData = [];
 
-    for (const approval of otRequestFlowApprovals) {
+    for (const approval of otPolicyFlowApprovals) {
       const { order, users, approverType, nextByOneApprove } = approval;
 
       if (users.length) {
@@ -123,7 +123,7 @@ export class OtRequestFlowService {
         for (const user of users) {
           const { subOrder, userCode } = user;
           savedData.push({
-            otRequestFlowId,
+            otPolicyFlowId,
             userCode,
             approverType,
             order,
@@ -133,7 +133,7 @@ export class OtRequestFlowService {
         }
       } else {
         savedData.push({
-          otRequestFlowId,
+          otPolicyFlowId,
           approverType,
           order,
           nextByOneApprove,
@@ -141,27 +141,27 @@ export class OtRequestFlowService {
       }
     }
 
-    await transaction.save(OtRequestFlowApproval, savedData);
+    await transaction.save(OtPolicyFlowApproval, savedData);
   }
 
   async deleteFlowAndApproval(
     transaction: EntityManager,
     otPolicyCode: string,
   ) {
-    const existOtRequestFlow = await this.otRequestFlowRepository.find({
+    const existOtPolicyFlow = await this.otPolicyFlowRepository.find({
       where: { otPolicyCode },
     });
 
-    const otRequestFlowIds = existOtRequestFlow.map((otRequestFlow) => {
-      return otRequestFlow.id;
+    const otPolicyFlowIds = existOtPolicyFlow.map((otPolicyFlow) => {
+      return otPolicyFlow.id;
     });
 
-    if (otRequestFlowIds.length) {
-      await transaction.delete(OtRequestFlowApproval, {
-        otRequestFlowId: In(otRequestFlowIds),
+    if (otPolicyFlowIds.length) {
+      await transaction.delete(OtPolicyFlowApproval, {
+        otPolicyFlowId: In(otPolicyFlowIds),
       });
 
-      await transaction.delete(OtRequestFlow, { id: In(otRequestFlowIds) });
+      await transaction.delete(OtPolicyFlow, { id: In(otPolicyFlowIds) });
     }
   }
 }

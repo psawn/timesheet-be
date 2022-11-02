@@ -13,7 +13,6 @@ import { calculateDiffMin } from 'src/helpers/calculate-diff-minute.helper';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { HolidayBenefitRepository } from 'src/modules/benefit-management/holiday-benefit/holiday-benefit.repository';
 import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-benefit/user-leave-benefit.entity';
-import { PolicyFlowApproval } from 'src/modules/policy-management/policy-flow-approval/policy-flow-approval.entity';
 import { Policy } from 'src/modules/policy-management/policy/policy.entity';
 import { PolicyRepository } from 'src/modules/policy-management/policy/policy.repository';
 import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
@@ -30,6 +29,7 @@ import {
   ChangeRequestStatus,
   CreateRequestDto,
   FilterRequestsDto,
+  UpdateRequestDto,
 } from './dto';
 import { TimeRequest } from './request.entity';
 import { RequestRepository } from './request.repository';
@@ -38,6 +38,7 @@ import { DepartmentRepository } from 'src/modules/department/department.reposito
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
 import { GeneralWorktimeSetting } from 'src/modules/worktime-management/general-worktime-setting/general-worktime-setting.entity';
 import { RequestApprover } from '../request-approver/request-approver.entity';
+import { getApproverInfo } from 'src/helpers/get-approver-info.helper';
 
 @Injectable()
 export class RequestService {
@@ -62,7 +63,7 @@ export class RequestService {
       throw new BadRequestException(`User dont's have department`);
     }
 
-    const existPolicy = await this.policyRepository.getPolicyWithApprover(
+    const existPolicy = await this.policyRepository.getPolicyInfo(
       policyCode,
       user.department,
     );
@@ -92,34 +93,20 @@ export class RequestService {
       ? moment(new Date()).add(existPolicy.maxDaysProcess, 'days')
       : null;
 
-    const query = this.genWorktimeStgRepository
-      .createQueryBuilder('setting')
-      .leftJoinAndMapMany(
-        'setting.worktime',
-        GeneralWorktime,
-        'worktime',
-        'setting.code = worktime.worktimeCode',
-      )
-      .orderBy('worktime.dayOfWeek', 'ASC');
-
-    const worktimeStg = await query.getOne();
-
-    if (!worktimeStg || !worktimeStg['worktime'].length) {
-      throw new NotFoundException('Worktime not found');
-    }
+    const worktimeStg = await this.getUserWorktime(user.worktimeCode);
 
     const { totalDate, workingDates } = await this.getWorkingDates(
       dates,
       worktimeStg,
     );
 
-    return await this.entityManager.transaction(async (transaction) => {
-      const settingApprover: any = approversTemp.map((approverTemp) => {
-        return {
-          ...omit(approverTemp, ['id', 'createdAt', 'updatedAt']),
-        };
-      });
+    const settingApprover: any = approversTemp.map((approverTemp) => {
+      return {
+        ...omit(approverTemp, ['id', 'createdAt', 'updatedAt']),
+      };
+    });
 
+    return await this.entityManager.transaction(async (transaction) => {
       const request = transaction.create(TimeRequest, {
         ...createRequestDto,
         userCode: user.code,
@@ -147,31 +134,14 @@ export class RequestService {
 
       await transaction.save(RequestApprover, requestApprovers);
 
-      const savedDates = transaction.create(
-        TimeRequestDate,
-        dates.map((date) => {
-          return {
-            ...date,
-            requestId: request.id,
-            userCode: user.code,
-          };
-        }),
+      await this.saveRequestDates(transaction, dates, request.id, user.code);
+
+      await this.saveWorkingDates(
+        transaction,
+        workingDates,
+        request.id,
+        user.code,
       );
-
-      await transaction.save(TimeRequestDate, savedDates);
-
-      const savedWorkingDates = transaction.create(
-        RequestWorkingDate,
-        workingDates.map((workingDate) => {
-          return {
-            ...workingDate,
-            requestId: request.id,
-            userCode: user.code,
-          };
-        }),
-      );
-
-      await transaction.save(RequestWorkingDate, savedWorkingDates);
 
       for (const approver of approvers) {
         const user = await this.userRepository.findOne({
@@ -223,7 +193,7 @@ export class RequestService {
     return await this.requestRepository.getAll(filterRequestsDto, conditions);
   }
 
-  async getMyRequest(user: AuthUserDto, id: string) {
+  async getMyRequest(id: string, user: AuthUserDto) {
     const conditions = { userCode: user.code };
     return await this.requestRepository.get(id, conditions);
   }
@@ -540,7 +510,13 @@ export class RequestService {
 
     for (const approval of approvals) {
       approversInfo.push(
-        await this.getApproverInfo(approval, departmentCode, managerCode),
+        await getApproverInfo(
+          approval,
+          departmentCode,
+          managerCode,
+          this.departmentRepository,
+          this.userRepository,
+        ),
       );
     }
 
@@ -567,44 +543,44 @@ export class RequestService {
     return { approversTemp, approvers, order, subOrder };
   }
 
-  async getApproverInfo(
-    approval: PolicyFlowApproval,
-    departmentCode: string,
-    managerCode: string,
-  ) {
-    switch (approval.approverType) {
-      case ApproverTypeEnum.DEPARTMENT_MANAGER:
-        const department = await this.departmentRepository.findOne({
-          where: { code: departmentCode, isActive: true },
-        });
+  // async getApproverInfo(
+  //   approval: PolicyFlowApproval,
+  //   departmentCode: string,
+  //   managerCode: string,
+  // ) {
+  //   switch (approval.approverType) {
+  //     case ApproverTypeEnum.DEPARTMENT_MANAGER:
+  //       const department = await this.departmentRepository.findOne({
+  //         where: { code: departmentCode, isActive: true },
+  //       });
 
-        if (department) {
-          return {
-            ...approval,
-            userCode: department.managerCode,
-          };
-        } else {
-          throw new NotFoundException('Department manager not found');
-        }
+  //       if (department) {
+  //         return {
+  //           ...approval,
+  //           userCode: department.managerCode,
+  //         };
+  //       } else {
+  //         throw new NotFoundException('Department manager not found');
+  //       }
 
-      case ApproverTypeEnum.DIRECT_MANAGER:
-        const directManager = await this.userRepository.findOne({
-          where: { code: managerCode },
-        });
+  //     case ApproverTypeEnum.DIRECT_MANAGER:
+  //       const directManager = await this.userRepository.findOne({
+  //         where: { code: managerCode },
+  //       });
 
-        if (directManager) {
-          return {
-            ...approval,
-            userCode: directManager.code,
-          };
-        } else {
-          throw new NotFoundException('Direct manager not found');
-        }
+  //       if (directManager) {
+  //         return {
+  //           ...approval,
+  //           userCode: directManager.code,
+  //         };
+  //       } else {
+  //         throw new NotFoundException('Direct manager not found');
+  //       }
 
-      default:
-        return { ...approval };
-    }
-  }
+  //     default:
+  //       return { ...approval };
+  //   }
+  // }
 
   async getWorkingDates(dates: any[], worktimeStg: GeneralWorktimeSetting) {
     const workingDates = [];
@@ -823,5 +799,109 @@ export class RequestService {
         );
       }
     }
+  }
+
+  async update(
+    id: string,
+    user: AuthUserDto,
+    updateRequestDto: UpdateRequestDto,
+  ) {
+    const { dates, reason } = updateRequestDto;
+
+    const existRequest = await this.requestRepository.findOne({
+      where: { id, userCode: user.code },
+    });
+
+    if (!existRequest) {
+      throw new NotFoundException('Request is not found');
+    }
+
+    if (existRequest.status != StatusRequestEnum.WAITING) {
+      throw new BadRequestException('Status request is not waiting');
+    }
+
+    return await this.entityManager.transaction(async (transaction) => {
+      if (dates) {
+        const worktimeStg = await this.getUserWorktime(user.worktimeCode);
+
+        const { totalDate, workingDates } = await this.getWorkingDates(
+          dates,
+          worktimeStg,
+        );
+
+        await transaction.delete(TimeRequestDate, { requestId: id });
+        await transaction.delete(RequestWorkingDate, { requestId: id });
+
+        await this.saveRequestDates(transaction, dates, id, user.code);
+        await this.saveWorkingDates(transaction, workingDates, id, user.code);
+
+        existRequest.totalDate = totalDate;
+      }
+
+      existRequest.reason = reason;
+
+      return await transaction.save(TimeRequest, existRequest);
+    });
+  }
+
+  async saveRequestDates(
+    transaction: EntityManager,
+    dates: any[],
+    requestId: string,
+    userCode: string,
+  ) {
+    const savedDates = transaction.create(
+      TimeRequestDate,
+      dates.map((date) => {
+        return {
+          ...date,
+          requestId,
+          userCode,
+        };
+      }),
+    );
+
+    await transaction.save(TimeRequestDate, savedDates);
+  }
+
+  async saveWorkingDates(
+    transaction: EntityManager,
+    workingDates: any[],
+    requestId: string,
+    userCode: string,
+  ) {
+    const savedWorkingDates = transaction.create(
+      RequestWorkingDate,
+      workingDates.map((workingDate) => {
+        return {
+          ...workingDate,
+          requestId,
+          userCode,
+        };
+      }),
+    );
+
+    await transaction.save(RequestWorkingDate, savedWorkingDates);
+  }
+
+  async getUserWorktime(worktimeCode: string) {
+    const query = this.genWorktimeStgRepository
+      .createQueryBuilder('setting')
+      .leftJoinAndMapMany(
+        'setting.worktime',
+        GeneralWorktime,
+        'worktime',
+        'setting.code = worktime.worktimeCode',
+      )
+      .orderBy('worktime.dayOfWeek', 'ASC')
+      .where({ code: worktimeCode });
+
+    const worktimeStg = await query.getOne();
+
+    if (!worktimeStg || !worktimeStg['worktime'].length) {
+      throw new NotFoundException('Worktime not found');
+    }
+
+    return worktimeStg;
   }
 }

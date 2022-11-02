@@ -1,8 +1,8 @@
 import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
 import { Entity, Column } from 'typeorm';
 
-@Entity({ name: 'ot-request-flows' })
-export class OtRequestFlow extends AbstractEntity {
+@Entity({ name: 'ot-policy-flows' })
+export class OtPolicyFlow extends AbstractEntity {
   @Column({ name: 'ot_policy_code', nullable: false })
   otPolicyCode: string;
 

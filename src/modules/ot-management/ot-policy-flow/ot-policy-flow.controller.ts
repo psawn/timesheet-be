@@ -6,32 +6,32 @@ import { Auth } from 'src/decorators/auth.decorator';
 import { Roles } from 'src/decorators/role.decorator';
 import { AuthUser } from 'src/decorators/user.decorator';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
-import { CreateOtRequestFlow } from './dto';
-import { OtRequestFlowService } from './ot-request-flow.service';
+import { CreateOtPolicyFlow } from './dto';
+import { OtPolicyFlowService } from './ot-policy-flow.service';
 
 @Auth()
-@ApiTags('OtRequestFlow')
-@Controller('ot-request-flows')
-export class OtRequestFlowController {
-  constructor(private readonly otRequestFlowService: OtRequestFlowService) {}
+@ApiTags('OtPolicyFlow')
+@Controller('ot-policy-flows')
+export class OtPolicyFlowController {
+  constructor(private readonly otPolicyFlowService: OtPolicyFlowService) {}
 
   @Post('/:otPolicyCode')
   @Roles(RoleCodeEnum.ADMIN)
   @ApiResponse({
     status: 200,
-    description: 'Create ot request flow successfully.',
+    description: 'Create ot policy flow successfully.',
   })
   @customDecorators()
   async create(
     @Param('otPolicyCode') otPolicyCode: string,
     @AuthUser() user: AuthUserDto,
-    @Body(ValidationPipe) createOtRequestFlow: CreateOtRequestFlow,
+    @Body(ValidationPipe) createOtPolicyFlow: CreateOtPolicyFlow,
   ) {
-    const otRequestFlow = await this.otRequestFlowService.create(
+    const otPolicyFlow = await this.otPolicyFlowService.create(
       otPolicyCode,
       user,
-      createOtRequestFlow,
+      createOtPolicyFlow,
     );
-    return { data: otRequestFlow };
+    return { data: otPolicyFlow };
   }
 }

@@ -41,14 +41,14 @@ export class AuthController {
     };
   }
 
-  @Get('/test')
+  @Get('/reabbimq-test')
   async test() {
     await this.rabbitmqService.getHello();
     await this.rabbitmqService.getHelloAsync();
     await this.rabbitmqService.publishEvent();
   }
 
-  @Post('/post-test')
+  @Post('/reabbimq-test')
   async createPost() {
     return await this.rabbitmqService.test();
   }

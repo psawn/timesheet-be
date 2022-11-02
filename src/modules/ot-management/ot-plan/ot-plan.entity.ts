@@ -30,4 +30,7 @@ export class OtPlan extends AbstractEntity {
 
   @Column({ name: 'status', default: StatusRequestEnum.WAITING })
   status: string;
+
+  @Column({ name: 'approver_code', nullable: false })
+  approverCode: string;
 }

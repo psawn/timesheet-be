@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { EntityManager } from 'typeorm';
-import { OtRequestFlowApproval } from './ot-request-flow-approval.entity';
+import { OtRequestApprover } from './ot-request-approver.entity';
 
 @Injectable()
-export class OtRequestFlowApprovalRepository extends TypeORMRepository<OtRequestFlowApproval> {
+export class OtRequestApproverRepository extends TypeORMRepository<OtRequestApprover> {
   constructor(manager: EntityManager) {
-    super(OtRequestFlowApproval, manager);
+    super(OtRequestApprover, manager);
   }
 }
