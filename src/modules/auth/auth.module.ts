@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmitterModule } from 'src/event-emitter/event-emitter.module';
+import { EmitterService } from 'src/event-emitter/event-emitter.service';
 import { RabitmqModule } from 'src/rabbitmq/rabbitmq.module';
 import { ConfigService } from 'src/shared/services/config.service';
 import { LeaveBenefitRepository } from '../benefit-management/leave-benefit/leave-benefit.repository';
@@ -22,6 +24,7 @@ const configService = new ConfigService();
       },
     }),
     RabitmqModule,
+    EmitterModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -30,6 +33,8 @@ const configService = new ConfigService();
     JwtStrategy,
     ConfigService,
     LeaveBenefitRepository,
+    // the emit function is called twice when add EmitterService to provider, add EmitterModule to imports is not
+    // EmitterService,
   ],
   exports: [],
 })

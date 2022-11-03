@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 import { SignInDto, SignUpDto } from './dto';
 import { AuthService } from './auth.service';
 import { RabbitmqService } from 'src/rabbitmq/rabbitmq.service';
+import { EmitterService } from 'src/event-emitter/event-emitter.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -12,6 +13,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly rabbitmqService: RabbitmqService,
+    private readonly emitterService: EmitterService,
   ) {}
 
   @Post('/signup')
@@ -51,5 +53,10 @@ export class AuthController {
   @Post('/reabbimq-test')
   async createPost() {
     return await this.rabbitmqService.test();
+  }
+
+  @Get('/event-emitter')
+  async testEventEmitter() {
+    this.emitterService.emitEvent();
   }
 }

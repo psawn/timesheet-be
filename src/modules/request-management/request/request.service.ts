@@ -768,12 +768,8 @@ export class RequestService {
       if (approveForAll && countOtherStatus == 0) {
         return await transaction.update(
           RequestApprover,
-          {
-            requestId: existRequest.id,
-          },
-          {
-            status: StatusRequestEnum.APPROVED,
-          },
+          { requestId: existRequest.id },
+          { status: StatusRequestEnum.APPROVED },
         );
       }
     }
@@ -790,12 +786,8 @@ export class RequestService {
       if (approveForAll && countOtherStatus == 0 && approver.order == 1) {
         return await transaction.update(
           RequestApprover,
-          {
-            requestId: existRequest.id,
-          },
-          {
-            status: StatusRequestEnum.APPROVED,
-          },
+          { requestId: existRequest.id },
+          { status: StatusRequestEnum.APPROVED },
         );
       }
     }

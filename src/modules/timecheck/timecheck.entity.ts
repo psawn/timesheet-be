@@ -1,6 +1,7 @@
 import { AbstractEntity } from 'src/common/abstracts/entity.abstract';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Unique } from 'typeorm';
 
+@Unique(['checkDate', 'userCode'])
 @Entity({ name: 'timechecks' })
 export class Timecheck extends AbstractEntity {
   @Column({ name: 'user_code' })

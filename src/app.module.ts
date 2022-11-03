@@ -18,6 +18,7 @@ import { PolicyManagerModule } from './modules/policy-management/policy-manager.
 import { RabitmqModule } from './rabbitmq/rabbitmq.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DefaultIfEmptyInterceptor } from './middleware/default-intercepter.middleware';
+import { EmitterModule } from './event-emitter/event-emitter.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DefaultIfEmptyInterceptor } from './middleware/default-intercepter.midd
     OtManagerModule,
     PolicyManagerModule,
     RabitmqModule,
+    EmitterModule,
   ],
   controllers: [],
   providers: [

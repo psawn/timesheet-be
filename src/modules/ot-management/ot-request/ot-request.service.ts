@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { DepartmentRepository } from 'src/modules/department/department.reposito
 import { ProjectUserRepository } from 'src/modules/project-management/project-user/project-user.repository';
 import { User } from 'src/modules/user-management/user/user.entity';
 import { UserRepository } from 'src/modules/user-management/user/user.repository';
-import { EntityManager } from 'typeorm';
+import { EntityManager, Not } from 'typeorm';
 import { OtPlan } from '../ot-plan/ot-plan.entity';
 import { OtPlanRepository } from '../ot-plan/ot-plan.repository';
 import { OtPolicy } from '../ot-policy/ot-policy.entity';
@@ -25,6 +26,7 @@ import { OtRequestDate } from '../ot-request-date/ot-request-date.entity';
 import { ChangeOtRequestStatus, CreateOtRequestDto } from './dto';
 import { OtRequest } from './ot-request.entity';
 import { OtRequestRepository } from './ot-request.repository';
+import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
 
 @Injectable()
 export class OtRequestService {
@@ -252,7 +254,7 @@ export class OtRequestService {
           'otRequest.userCode = sender.code',
         )
         .leftJoinAndMapMany(
-          'request.approvers',
+          'otRequest.approvers',
           OtRequestApprover,
           'approver',
           'otRequest.id = approver.otRequestId AND approver.userCode = :userCode AND approver.status = :status',
@@ -260,6 +262,12 @@ export class OtRequestService {
             userCode: user.code,
             status: StatusRequestEnum.WAITING,
           },
+        )
+        .leftJoinAndMapMany(
+          'otRequest.dates',
+          OtRequestDate,
+          'date',
+          'otRequest.id = date.otRequestId',
         )
         .where({ id });
 
@@ -269,7 +277,245 @@ export class OtRequestService {
         throw new NotFoundException('Request not found');
       }
 
-      console.log('existOtRequest', existOtRequest);
+      const approvers = get(existOtRequest, 'approvers', []);
+
+      const dates = get(existOtRequest, 'dates', []);
+
+      if (!approvers.length) {
+        throw new ForbiddenException(`User don't have permissions`);
+      }
+
+      if (
+        existOtRequest.status !== StatusRequestEnum.WAITING &&
+        existOtRequest.status !== StatusRequestEnum.CANCELLED
+      ) {
+        throw new BadRequestException('Request status is not WAITING');
+      }
+
+      await this.entityManager.transaction(async (transaction) => {
+        await transaction.save(
+          OtRequestApprover,
+          approvers.map((approver) => {
+            return { ...approver, status };
+          }),
+        );
+
+        if (status == StatusRequestEnum.APPROVED) {
+          const approvedRequest = await this.handleApprovedRequest(
+            transaction,
+            existOtRequest,
+            approvers,
+          );
+
+          if (approvedRequest) {
+            await this.handleOtBusiness(
+              transaction,
+              dates,
+              user.code,
+              user.name,
+            );
+          }
+        }
+
+        if (status == StatusRequestEnum.REJECTED) {
+          await this.handleRejectedRequest(transaction, id);
+        }
+      });
     }
+  }
+
+  async handleRejectedRequest(transaction: EntityManager, id: string) {
+    await transaction.update(
+      OtRequest,
+      { id },
+      { status: StatusRequestEnum.REJECTED },
+    );
+  }
+
+  async handleApprovedRequest(
+    transaction: EntityManager,
+    existOtRequest: OtRequest,
+    approvers: any[],
+  ) {
+    const approversTemp = existOtRequest.settingApprover;
+
+    for (const approver of approvers) {
+      await this.updateSameOrder(
+        transaction,
+        existOtRequest.id,
+        approver.order,
+        approver.nextByOneApprove,
+      );
+
+      await this.updateOtherOrder(transaction, existOtRequest, approver);
+
+      await this.createNewApprover(
+        transaction,
+        existOtRequest,
+        approver,
+        approversTemp,
+      );
+    }
+
+    const checkApproverStatus = await transaction.findOne(OtRequestApprover, {
+      where: {
+        status: StatusRequestEnum.APPROVED,
+        order: existOtRequest.order,
+        subOrder: existOtRequest.subOrder,
+      },
+    });
+
+    if (checkApproverStatus) {
+      existOtRequest.status = StatusRequestEnum.APPROVED;
+      await transaction.save(OtRequest, existOtRequest);
+      return true;
+    }
+  }
+
+  async updateSameOrder(
+    transaction: EntityManager,
+    otRequestId: string,
+    order: number,
+    nextByOneApprove: boolean,
+  ) {
+    if (nextByOneApprove) {
+      await transaction.update(
+        OtRequestApprover,
+        { otRequestId, order },
+        { status: StatusRequestEnum.APPROVED },
+      );
+    }
+  }
+
+  async updateOtherOrder(
+    transaction: EntityManager,
+    existOtRequest: OtRequest,
+    approver: any,
+  ) {
+    const flowType = existOtRequest.flowType;
+    const approveForAll = get(existOtRequest, 'flow.approveForAll', null);
+
+    if (flowType == RequestFlowEnum.PARALLEL) {
+      const countOtherStatus = await transaction.count(OtRequestApprover, {
+        where: {
+          otRequestId: existOtRequest.id,
+          order: approver.order,
+          status: Not(StatusRequestEnum.APPROVED),
+        },
+      });
+
+      if (approveForAll && countOtherStatus == 0) {
+        return await transaction.update(
+          OtRequestApprover,
+          { otRequestId: existOtRequest.id },
+          { status: StatusRequestEnum.APPROVED },
+        );
+      }
+    }
+
+    if (flowType == RequestFlowEnum.SEQUENCE) {
+      const countOtherStatus = await transaction.count(OtRequestApprover, {
+        where: {
+          otRequestId: existOtRequest.id,
+          order: 1,
+          status: Not(StatusRequestEnum.APPROVED),
+        },
+      });
+
+      if (approveForAll && countOtherStatus == 0 && approver.order == 1) {
+        return await transaction.update(
+          OtRequestApprover,
+          { otRequestId: existOtRequest.id },
+          { status: StatusRequestEnum.APPROVED },
+        );
+      }
+    }
+  }
+
+  async createNewApprover(
+    transaction: EntityManager,
+    existOtRequest: OtRequest,
+    approver: any,
+    approversTemp: any[],
+  ) {
+    if (existOtRequest.flowType == RequestFlowEnum.SEQUENCE) {
+      const currentSubOrder = approver.subOrder;
+      const currentOrder = approver.order;
+
+      let newApproverArr;
+
+      if (currentSubOrder == null) {
+        newApproverArr = approversTemp.filter((item) => {
+          if (item.order !== currentOrder + 1) {
+            return false;
+          }
+
+          if (
+            !item.nextByOneApprove &&
+            item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+          ) {
+            return item.subOrder === 1;
+          }
+
+          return item;
+        });
+      }
+
+      if (currentSubOrder != null) {
+        newApproverArr = approversTemp.filter((item) => {
+          if (
+            item.order == currentOrder &&
+            item.subOrder == currentSubOrder + 1 &&
+            item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+          ) {
+            return item;
+          }
+        });
+
+        if (!newApproverArr.length) {
+          newApproverArr = approversTemp.filter((item) => {
+            if (item.order !== currentOrder + 1) {
+              return false;
+            }
+
+            if (
+              !item.nextByOneApprove &&
+              item.approverType == ApproverTypeEnum.SPECIFIC_PERSON
+            ) {
+              return item.subOrder === 1;
+            }
+
+            return item;
+          });
+        }
+      }
+
+      const newApprovers = transaction.create(
+        OtRequestApprover,
+        newApproverArr.map((newApprover) => {
+          return { ...newApprover, otRequestId: existOtRequest.id };
+        }),
+      );
+
+      await transaction.save(OtRequestApprover, newApprovers);
+    }
+  }
+
+  async handleOtBusiness(
+    transaction: EntityManager,
+    dates: any[],
+    userCode: string,
+    username: string,
+  ) {
+    const data = dates.map((item) => {
+      return {
+        checkDate: item.date,
+        otWorkHour: item.otHour,
+        username,
+        userCode,
+      };
+    });
+
+    await transaction.upsert(Timecheck, data, ['checkDate', 'userCode']);
   }
 }
