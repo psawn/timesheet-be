@@ -250,7 +250,26 @@ export class OtRequestService {
           User,
           'sender',
           'otRequest.userCode = sender.code',
-        );
+        )
+        .leftJoinAndMapMany(
+          'request.approvers',
+          OtRequestApprover,
+          'approver',
+          'otRequest.id = approver.otRequestId AND approver.userCode = :userCode AND approver.status = :status',
+          {
+            userCode: user.code,
+            status: StatusRequestEnum.WAITING,
+          },
+        )
+        .where({ id });
+
+      const existOtRequest = await query.getOne();
+
+      if (!existOtRequest) {
+        throw new NotFoundException('Request not found');
+      }
+
+      console.log('existOtRequest', existOtRequest);
     }
   }
 }
