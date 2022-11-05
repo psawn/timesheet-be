@@ -23,6 +23,6 @@ import { UserService } from './user.service';
     DepartmentRepository,
     UserRoleRepository,
   ],
-  exports: [],
+  exports: [UserService],
 })
 export class UserModule {}
