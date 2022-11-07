@@ -23,7 +23,12 @@ import { OtPolicy } from '../ot-policy/ot-policy.entity';
 import { OtRequestApprover } from '../ot-request-approver/ot-request-approver.entity';
 import { OtRequestDateDto } from '../ot-request-date/dto';
 import { OtRequestDate } from '../ot-request-date/ot-request-date.entity';
-import { ChangeOtRequestStatus, CreateOtRequestDto } from './dto';
+import {
+  ChangeOtRequestStatus,
+  CreateOtRequestDto,
+  FilterOtRequestsDto,
+  UpdateOtRequestDto,
+} from './dto';
 import { OtRequest } from './ot-request.entity';
 import { OtRequestRepository } from './ot-request.repository';
 import { Timecheck } from 'src/modules/timecheck/timecheck.entity';
@@ -235,6 +240,7 @@ export class OtRequestService {
         };
       }),
     );
+
     await transaction.save(OtRequestDate, savedOtRequestDates);
   }
 
@@ -517,5 +523,88 @@ export class OtRequestService {
     });
 
     await transaction.upsert(Timecheck, data, ['checkDate', 'userCode']);
+  }
+
+  async update(
+    id: string,
+    user: AuthUserDto,
+    updateOtRequestDto: UpdateOtRequestDto,
+  ) {
+    const { otRequestDates, reason } = updateOtRequestDto;
+
+    const existOtRequest = await this.otRequestRepository.findOne({
+      where: { id, userCode: user.code },
+    });
+
+    if (!existOtRequest) {
+      throw new NotFoundException('Ot request not found');
+    }
+
+    if (existOtRequest.status != StatusRequestEnum.WAITING) {
+      throw new BadRequestException('Status ot request is not waiting');
+    }
+
+    return await this.entityManager.transaction(async (transaction) => {
+      if (otRequestDates) {
+        const existOtPlan = await this.otPlanRepository.getOtPlanInfo(
+          existOtRequest.otPlanId,
+          user.department,
+        );
+
+        await this.checkOtRequestDates(otRequestDates, existOtPlan);
+
+        const totalOtHour = this.calculateTotalOtHour(otRequestDates);
+
+        await transaction.delete(OtRequestDate, { otRequestId: id });
+        await this.saveOtRequestDates(
+          transaction,
+          otRequestDates,
+          id,
+          user.code,
+        );
+
+        existOtRequest.totalOtHour = totalOtHour;
+        existOtRequest.totalDate = otRequestDates.length;
+      }
+
+      existOtRequest.reason = reason;
+
+      return await transaction.save(OtRequest, existOtRequest);
+    });
+  }
+
+  async getAll(filterOtRequestsDto: FilterOtRequestsDto) {
+    return await this.otRequestRepository.getAll(filterOtRequestsDto);
+  }
+
+  async getAllMyRequests(
+    user: AuthUserDto,
+    filterOtRequestsDto: FilterOtRequestsDto,
+  ) {
+    const conditions = { userCode: user.code };
+    return await this.otRequestRepository.getAll(
+      filterOtRequestsDto,
+      conditions,
+    );
+  }
+
+  async getAllForApprover(
+    user: AuthUserDto,
+    filterOtRequestsDto: FilterOtRequestsDto,
+  ) {
+    const conditions = `approver.userCode = '${user.code}'`;
+    return await this.otRequestRepository.getAll(
+      filterOtRequestsDto,
+      conditions,
+    );
+  }
+
+  async getRequest(id: string) {
+    return await this.otRequestRepository.getRequest(id);
+  }
+
+  async getMyRequest(id: string, user: AuthUserDto) {
+    const conditions = { userCode: user.code };
+    return await this.otRequestRepository.getRequest(id, conditions);
   }
 }

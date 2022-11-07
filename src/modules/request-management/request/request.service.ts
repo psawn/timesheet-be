@@ -185,7 +185,7 @@ export class RequestService {
     return await this.requestRepository.getAll(filterRequestsDto, conditions);
   }
 
-  async getAllToApprover(
+  async getAllForApprover(
     user: AuthUserDto,
     filterRequestsDto: FilterRequestsDto,
   ) {

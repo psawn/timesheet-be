@@ -21,9 +21,10 @@ export class RequestRepository extends TypeORMRepository<TimeRequest> {
       filterRequestsDto.limit || PaginationConstants.DEFAULT_LIMIT_ITEM;
     const offset = (page - 1) * limit;
 
+    // bug here
     const query = this.createQueryBuilder('request')
       .leftJoinAndMapMany(
-        'request.date',
+        'request.dates',
         TimeRequestDate,
         'date',
         'request.id = date.requestId',

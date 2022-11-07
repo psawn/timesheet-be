@@ -86,11 +86,11 @@ export class RequestController {
     description: 'Get request to approver successfully.',
   })
   @customDecorators()
-  async getAllToApprover(
+  async getAllForApprover(
     @AuthUser() user: AuthUserDto,
     @Query() filterRequestsDto: FilterRequestsDto,
   ) {
-    const { items, pagination } = await this.requestService.getAllToApprover(
+    const { items, pagination } = await this.requestService.getAllForApprover(
       user,
       filterRequestsDto,
     );
