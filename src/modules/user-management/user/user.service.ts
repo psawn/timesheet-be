@@ -20,6 +20,7 @@ import { UserLeaveBenefit } from 'src/modules/benefit-management/user-leave-bene
 import { hashPassword } from 'src/helpers/encrypt.helper';
 import { UserRole } from '../user-role/user-role.entity';
 import { S3Service } from 'src/shared/services/aws.service';
+import { RoleCodeEnum } from 'src/common/constants/role.enum';
 
 @Injectable()
 export class UserService {
@@ -225,5 +226,47 @@ export class UserService {
     );
 
     return existUser;
+  }
+
+  async socialLogin(conditions: any, properties: any) {
+    const user = await this.userRepository.findOne({ where: conditions });
+
+    if (user) {
+      return user;
+    }
+
+    return await this.entityManager.transaction(async (transaction) => {
+      const countUser = await transaction.count(User);
+      const code = `EMP${String(countUser + 1).padStart(3, '0')}`;
+      const newUser = transaction.create(User, {
+        ...properties,
+        code,
+      });
+
+      const userRole = transaction.create(UserRole, {
+        roleCode: RoleCodeEnum.EMP,
+        userCode: code,
+      });
+
+      await transaction.save(UserRole, userRole);
+      return await transaction.save(User, newUser);
+    });
+
+    // const user = await this.findOne({ where: conditions });
+
+    // if (!user) {
+    //   const countUser = await this.count();
+    //   const code = `EMP${String(countUser).padStart(4, '0')}`;
+    //   const newUser = this.create({
+    //     ...properties,
+    //     code,
+    //   });
+
+    //   await this.s
+
+    //   return await this.save(newUser);
+    // }
+
+    // return user;
   }
 }

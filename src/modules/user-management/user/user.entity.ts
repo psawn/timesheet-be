@@ -7,10 +7,10 @@ export class User extends AbstractEntity {
   @Column({ name: 'email' })
   email: string;
 
-  @Column({ name: 'code' })
+  @Column({ name: 'code', unique: true })
   code: string;
 
-  @Column({ name: 'password' })
+  @Column({ name: 'password', nullable: true })
   password: string;
 
   @Column({ name: 'phone', nullable: true })
@@ -51,6 +51,9 @@ export class User extends AbstractEntity {
 
   @Column({ name: 'avatar', nullable: true })
   avatar: string;
+
+  @Column({ name: 'provider', nullable: true })
+  provider: string;
 
   async validatePassword(password: string): Promise<boolean> {
     const hashPassword = await bcrypt.compare(password, this.password);

@@ -207,10 +207,10 @@ export class UserRepository extends TypeORMRepository<User> {
   async getOwnersInfo(code: string) {
     const query = this.createQueryBuilder('user')
       .leftJoinAndMapOne(
-        'user.department',
+        'user.departmentInfo',
         Department,
-        'department',
-        'user.department = department.code',
+        'departmentInfo',
+        'user.department = departmentInfo.code',
       )
       .leftJoinAndMapOne(
         'user.manager',
@@ -235,23 +235,17 @@ export class UserRepository extends TypeORMRepository<User> {
 
     const data = await query.getOne();
 
-    const omitManager = pick(get(data, 'manager', null), [
-      'id',
-      'code',
-      'name',
-    ]);
+    const omitManager = get(data, 'manager', null)
+      ? pick(get(data, 'manager', null), ['id', 'code', 'name'])
+      : null;
 
-    const omitLeaveBenefit = pick(get(data, 'leaveBenefit', null), [
-      'id',
-      'code',
-      'name',
-    ]);
+    const omitLeaveBenefit = get(data, 'leaveBenefit', null)
+      ? pick(get(data, 'leaveBenefit', null), ['id', 'code', 'name'])
+      : null;
 
-    const omitDepartment = pick(get(data, 'department', null), [
-      'id',
-      'code',
-      'name',
-    ]);
+    const omitDepartment = get(data, 'department', null)
+      ? pick(get(data, 'department', null), ['id', 'code', 'name'])
+      : null;
 
     const omitWorktime = get(data, 'worktimes', []).map((worktime) =>
       omit(worktime, ['createdAt', 'updatedAt']),

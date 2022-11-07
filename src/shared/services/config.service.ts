@@ -17,6 +17,12 @@ export interface JWTConfig {
   refreshJWTExpire: string;
 }
 
+export interface GoogleConfig {
+  clientID: string;
+  clientSecret: string;
+  callbackURL: string;
+}
+
 export class ConfigService {
   private readonly envConfig: dotenv.DotenvParseOutput;
   private readonly validationScheme = {
@@ -38,6 +44,10 @@ export class ConfigService {
     BCRYPT_SALT: Joi.number().required().default(10),
 
     DEFAULT_WORK_HOUR: Joi.number().required().default(8),
+
+    GOOGLE_CLIENT_ID: Joi.string().required(),
+    GOOGLE_CLIENT_SECRET: Joi.string().required(),
+    CALLBACK_URL: Joi.string().required(),
   };
 
   constructor() {
@@ -91,6 +101,14 @@ export class ConfigService {
 
   get defaultWorktimeHour(): number {
     return Number(this.envConfig.WORKTIME_HOUR);
+  }
+
+  get google(): GoogleConfig {
+    return {
+      clientID: this.envConfig.GOOGLE_CLIENT_ID,
+      clientSecret: this.envConfig.GOOGLE_CLIENT_SECRET,
+      callbackURL: this.envConfig.CALLBACK_URL,
+    };
   }
 
   private validateInput(

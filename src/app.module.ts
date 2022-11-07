@@ -19,6 +19,7 @@ import { RabitmqModule } from './rabbitmq/rabbitmq.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DefaultIfEmptyInterceptor } from './middleware/default-intercepter.middleware';
 import { EmitterModule } from './event-emitter/event-emitter.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { EmitterModule } from './event-emitter/event-emitter.module';
     PolicyManagerModule,
     RabitmqModule,
     EmitterModule,
+    PassportModule.register({ session: true }),
   ],
   controllers: [],
   providers: [

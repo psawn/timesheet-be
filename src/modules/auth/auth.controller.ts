@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { customDecorators } from 'src/common/custom-decorators/response.decorator';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
@@ -6,6 +6,8 @@ import { SignInDto, SignUpDto } from './dto';
 import { AuthService } from './auth.service';
 import { RabbitmqService } from 'src/rabbitmq/rabbitmq.service';
 import { EmitterService } from 'src/event-emitter/event-emitter.service';
+import { GoogleAuthGuard } from 'src/guards/google.guard';
+import { Request } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -68,5 +70,32 @@ export class AuthController {
   @Get('/event-emitter')
   async testEventEmitter() {
     this.emitterService.emitEvent();
+  }
+
+  @UseGuards(GoogleAuthGuard)
+  @Get('/google/login')
+  async googleAuth() {
+    return;
+  }
+
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/redirect')
+  async handleGoogleRedirec() {
+    return { msg: 'OK' };
+  }
+
+  @Get('status')
+  async signInWithSocialCredentials(@Req() request: Request) {
+    if (request.user && request.user['email']) {
+      const data = await this.authService.signInWithSocialCredentials(
+        request.user['email'],
+      );
+      return {
+        message: 'Login successfully.',
+        data,
+      };
+    }
+
+    return { msg: 'Not Authenticated' };
   }
 }
