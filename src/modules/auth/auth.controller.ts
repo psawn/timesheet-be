@@ -31,16 +31,6 @@ export class AuthController {
     };
   }
 
-  @Get('google/login')
-  googleLogin() {
-    return { msg: 'Google Auth' };
-  }
-
-  @Get('google/redirect')
-  googleRedirect() {
-    return { msg: 'Ok' };
-  }
-
   @Post('/signin')
   @ApiResponse({
     status: 200,

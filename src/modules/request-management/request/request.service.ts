@@ -189,8 +189,22 @@ export class RequestService {
     user: AuthUserDto,
     filterRequestsDto: FilterRequestsDto,
   ) {
-    const conditions = { approverCode: user.code };
-    return await this.requestRepository.getAll(filterRequestsDto, conditions);
+    const conditions = `approverInfo.code = '${user.code}'`;
+    const requests = await this.requestRepository.getAll(
+      filterRequestsDto,
+      conditions,
+    );
+
+    const requestIds = requests.items.map((request) => {
+      return `'${request.id}'`;
+    });
+
+    const newConditions = `request.id In(${requestIds})`;
+
+    return await this.requestRepository.getAll(
+      filterRequestsDto,
+      newConditions,
+    );
   }
 
   async getMyRequest(id: string, user: AuthUserDto) {

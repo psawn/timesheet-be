@@ -115,6 +115,20 @@ export class OtRequestController {
     return { data: items, pagination };
   }
 
+  @Get('/my-request/:id')
+  @ApiResponse({
+    status: 200,
+    description: 'Get request successfully.',
+  })
+  @customDecorators()
+  async getMyRequest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() user: AuthUserDto,
+  ) {
+    const otRequest = await this.otRequestService.getMyRequest(id, user);
+    return { data: otRequest };
+  }
+
   @Get('/approver')
   @ApiResponse({
     status: 200,
@@ -141,20 +155,6 @@ export class OtRequestController {
   @customDecorators()
   async getRequest(@Param('id', ParseUUIDPipe) id: string) {
     const otRequest = await this.otRequestService.getRequest(id);
-    return { data: otRequest };
-  }
-
-  @Get('/my-request/:id')
-  @ApiResponse({
-    status: 200,
-    description: 'Get request successfully.',
-  })
-  @customDecorators()
-  async getMyRequest(
-    @Param('id', ParseUUIDPipe) id: string,
-    @AuthUser() user: AuthUserDto,
-  ) {
-    const otRequest = await this.otRequestService.getMyRequest(id, user);
     return { data: otRequest };
   }
 }
