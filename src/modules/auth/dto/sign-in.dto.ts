@@ -1,7 +1,10 @@
+import { Field, InputType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
+@InputType()
 export class SignInDto {
+  @Field()
   @IsNotEmpty()
   @IsEmail()
   @ApiProperty({
@@ -10,6 +13,7 @@ export class SignInDto {
   })
   email: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({

@@ -211,10 +211,11 @@ export class UserService {
       roleCode: role,
     });
 
-    await this.entityManager.transaction(async (transaction) => {
-      await transaction.save(User, newUser);
+    return await this.entityManager.transaction(async (transaction) => {
+      const user = await transaction.save(User, newUser);
       await transaction.save(UserLeaveBenefit, userLeaveBenefit);
       await transaction.save(UserRole, userRole);
+      return user;
     });
   }
 

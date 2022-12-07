@@ -20,6 +20,10 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DefaultIfEmptyInterceptor } from './middleware/default-intercepter.middleware';
 import { EmitterModule } from './event-emitter/event-emitter.module';
 import { PassportModule } from '@nestjs/passport';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver } from '@nestjs/apollo';
+import { UserResolver } from './modules/user-management/user/user.resolver';
+import { AuthResolver } from './modules/auth/auth.resolver';
 
 @Module({
   imports: [
@@ -41,6 +45,10 @@ import { PassportModule } from '@nestjs/passport';
     RabitmqModule,
     EmitterModule,
     PassportModule.register({ session: true }),
+    GraphQLModule.forRoot({
+      driver: ApolloDriver,
+      autoSchemaFile: 'schema.gql',
+    }),
   ],
   controllers: [],
   providers: [
@@ -48,6 +56,8 @@ import { PassportModule } from '@nestjs/passport';
       provide: APP_INTERCEPTOR,
       useClass: DefaultIfEmptyInterceptor,
     },
+    UserResolver,
+    AuthResolver,
   ],
 })
 export class AppModule {}

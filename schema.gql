@@ -1,0 +1,60 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  email: String!
+  code: String!
+  password: String
+  phone: String!
+  address: String!
+  gender: String!
+  department: String!
+  contractStartDate: DateTime!
+  contractEndDate: DateTime!
+  designation: String!
+  name: String!
+  isActive: Boolean!
+  managerCode: String!
+  leaveBenefitCode: String!
+  worktimeCode: String!
+  avatar: String!
+  provider: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type SignInResponse {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type Query {
+  get(code: String!): User!
+}
+
+type Mutation {
+  create(createUserDto: CreateUserDto!): User!
+  signIn(signInDto: SignInDto!): SignInResponse!
+}
+
+input CreateUserDto {
+  email: String!
+  code: String!
+  password: String!
+  phone: String!
+  department: String!
+  managerCode: String!
+  worktimeCode: String!
+  leaveBenefitCode: String!
+  name: String!
+  role: String!
+}
+
+input SignInDto {
+  email: String!
+  password: String!
+}

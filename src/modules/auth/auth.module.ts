@@ -41,6 +41,6 @@ const configService = new ConfigService();
     // the emit function is called twice when add EmitterService to provider, add EmitterModule to imports is not
     // EmitterService,
   ],
-  exports: [],
+  exports: [AuthService],
 })
 export class AuthModule {}

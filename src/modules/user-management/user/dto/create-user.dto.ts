@@ -1,3 +1,4 @@
+import { Field, InputType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -9,7 +10,9 @@ import {
 } from 'class-validator';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 
+@InputType()
 export class CreateUserDto {
+  @Field()
   @IsNotEmpty()
   @IsEmail()
   @ApiProperty({
@@ -18,6 +21,7 @@ export class CreateUserDto {
   })
   email: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -27,6 +31,7 @@ export class CreateUserDto {
   @Transform(({ value }) => value.toUpperCase())
   code: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -35,6 +40,7 @@ export class CreateUserDto {
   })
   password: string;
 
+  @Field()
   @IsNotEmpty()
   @IsNumberString()
   @ApiProperty({
@@ -43,6 +49,7 @@ export class CreateUserDto {
   })
   phone: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -51,6 +58,7 @@ export class CreateUserDto {
   })
   department: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -59,6 +67,7 @@ export class CreateUserDto {
   })
   managerCode: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -67,6 +76,7 @@ export class CreateUserDto {
   })
   worktimeCode: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -75,6 +85,7 @@ export class CreateUserDto {
   })
   leaveBenefitCode: string;
 
+  @Field()
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -83,6 +94,7 @@ export class CreateUserDto {
   })
   name: string;
 
+  @Field()
   @IsNotEmpty()
   @IsEnum(RoleCodeEnum)
   @ApiProperty({
