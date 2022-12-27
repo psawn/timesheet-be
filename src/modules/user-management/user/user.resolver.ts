@@ -3,7 +3,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { Roles } from 'src/decorators/role.decorator';
 import { GqlAuthGuard } from 'src/guards/gql-auth.guard';
-import { GqlRolesGuard } from 'src/guards/qpl-role.guard';
+import { GqlRolesGuard } from 'src/guards/gpl-role.guard';
 import { RolesGuard } from 'src/guards/role.guard';
 import { CreateUserDtoArg } from './user.args';
 import { User } from './user.entity';

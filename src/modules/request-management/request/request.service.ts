@@ -153,7 +153,7 @@ export class RequestService {
         }
       }
 
-      const toEmails = emailArr.join(',');
+      // const toEmails = emailArr.join(',');
 
       // const config = {
       //   from: '"📧 Timesheet notification" <huynvth2001006@fpt.edu.vn>',

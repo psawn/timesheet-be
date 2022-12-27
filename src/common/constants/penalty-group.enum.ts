@@ -1,0 +1,5 @@
+export enum PenaltyGroupEnum {
+  MISSING_LOG_WORK = 'MISSING_LOG_WORK',
+  MISSING_TIME_CHECK = 'MISSING_TIME_CHECK',
+  OTHER = 'OTHER',
+}

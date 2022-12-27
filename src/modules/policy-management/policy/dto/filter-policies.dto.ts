@@ -30,7 +30,7 @@ export class FilterPoliciesDto extends PageLimitDto {
     example: 'Absence',
     required: false,
   })
-  group: string;
+  group?: string;
 
   @IsOptional()
   @ApiProperty({
@@ -38,5 +38,5 @@ export class FilterPoliciesDto extends PageLimitDto {
     example: true,
     required: false,
   })
-  isActive: boolean;
+  isActive?: boolean;
 }

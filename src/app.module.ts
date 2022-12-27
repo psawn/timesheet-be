@@ -24,6 +24,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { UserResolver } from './modules/user-management/user/user.resolver';
 import { AuthResolver } from './modules/auth/auth.resolver';
+import { PenaltyManagementModule } from './modules/penalty-management/penalty-management.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthResolver } from './modules/auth/auth.resolver';
     TimelogModule,
     OtManagerModule,
     PolicyManagerModule,
+    PenaltyManagementModule,
     RabitmqModule,
     EmitterModule,
     PassportModule.register({ session: true }),
