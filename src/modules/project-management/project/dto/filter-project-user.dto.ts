@@ -7,7 +7,7 @@ export class FilterProjectUserDto extends PageLimitDto {
   @IsString()
   @ApiProperty({
     description: 'User code',
-    example: 'TEST001',
+    example: 'EMP001',
     required: false,
   })
   userCode?: string;

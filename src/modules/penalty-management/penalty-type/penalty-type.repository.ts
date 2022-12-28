@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TypeORMRepository } from 'src/database/typeorm.repository';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
 import { User } from 'src/modules/user-management/user/user.entity';
-import { EntityManager, Not } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import {
   CreatePenaltyTypeDto,
   FilterPenaltyTypeDto,
@@ -76,12 +76,6 @@ export class PenaltyTypeRepository extends TypeORMRepository<PenaltyType> {
     code: string,
     updatePenaltyTypeDto: UpdatePenaltyTypeDto,
   ) {
-    const { isDefault } = updatePenaltyTypeDto;
-
-    if (isDefault) {
-      await this.update({ code: Not(code) }, { isDefault: false });
-    }
-
     return await this.update(
       { code },
       { ...updatePenaltyTypeDto, updatedBy: user.code },

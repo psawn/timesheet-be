@@ -51,12 +51,4 @@ export class UpdatePenaltyTypeDto {
     example: true,
   })
   isActive: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  @ApiProperty({
-    description: 'Is default',
-    example: true,
-  })
-  isDefault: boolean;
 }

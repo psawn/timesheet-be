@@ -13,6 +13,24 @@ export class AuthService {
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
+    const { code, email } = signUpDto;
+
+    const duplicateEmail = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    const duplicateUserCode = await this.userRepository.findOne({
+      where: { code },
+    });
+
+    if (duplicateEmail) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    if (duplicateUserCode) {
+      throw new BadRequestException('Code already exists');
+    }
+
     return await this.userRepository.signUp(signUpDto);
   }
 

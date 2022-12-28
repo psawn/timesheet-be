@@ -39,7 +39,4 @@ export class PenaltyType extends AbstractEntity {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
-
-  @Column({ name: 'is_default', default: false })
-  isDefault: boolean;
 }

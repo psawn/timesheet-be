@@ -24,7 +24,7 @@ import { PenaltyTypeService } from './penalty-type.service';
 
 @Auth()
 @ApiTags('PenaltyType')
-@Controller('penalty-type')
+@Controller('penalty-types')
 export class PenaltyTypeController {
   constructor(private readonly penaltyTypeService: PenaltyTypeService) {}
 
