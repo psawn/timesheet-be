@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { PenaltyGroupEnum } from 'src/common/constants/penalty-group.enum';
 import { RoleCodeEnum } from 'src/common/constants/role.enum';
 import { AuthUserDto } from 'src/modules/auth/dto/auth-user.dto';
+import { TimecheckRepository } from 'src/modules/timecheck/timecheck.repository';
+import { TimelogRepository } from 'src/modules/timelog/timelog.repository';
+import { Between } from 'typeorm';
 import { PenaltyTypeRepository } from '../penalty-type/penalty-type.repository';
 import { FilterPenaltiesDto, ScanDto } from './dto';
 import { PenaltyRepository } from './penalty.repository';
@@ -10,6 +14,8 @@ export class PenaltyService {
   constructor(
     private readonly penaltyRepository: PenaltyRepository,
     private readonly penaltyTypeRepository: PenaltyTypeRepository,
+    private readonly timecheckRepository: TimecheckRepository,
+    private readonly timelogRepository: TimelogRepository,
   ) {}
 
   async getAll(user: AuthUserDto, filterPenaltiesDto: FilterPenaltiesDto) {
@@ -31,6 +37,16 @@ export class PenaltyService {
     if (!penaltyType) {
       return;
     }
+
+    if (penaltyGroup == PenaltyGroupEnum.MISSING_TIME_CHECK) {
+      await this.handleScanTimecheck(startDate, endDate);
+    }
+
+    if (penaltyGroup == PenaltyGroupEnum.MISSING_LOG_WORK) {
+      //
+    }
+
+    console.log('penaltyType', penaltyType);
 
     console.log(penaltyType);
   }
@@ -54,5 +70,31 @@ export class PenaltyService {
       : null;
 
     return roleCondition;
+  }
+
+  async handleScanTimecheck(startDate: Date, endDate: Date) {
+    const timechecks = await this.timecheckRepository.find({
+      where: {
+        checkDate: Between(startDate, endDate),
+      },
+    });
+
+    for (const timecheck of timechecks) {
+      if (timecheck.isDayOff) {
+        continue;
+      }
+
+      if (timecheck.isLeaveBenefit) {
+        continue;
+      }
+
+      if (timecheck.missCheckIn || timecheck.missCheckOut) {
+        console.log(timecheck);
+      }
+    }
+  }
+
+  async handleScanTimelog() {
+    const timelogs = await this.timelogRepository.find();
   }
 }
